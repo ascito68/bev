@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Plus, Settings, Fuel, Zap, TrendingDown, Plug } from 'lucide-react'
+import { Plus, Settings, Fuel, Zap, Plug, TrendingDown, TrendingUp } from 'lucide-react'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import type { Config, Trip } from './types'
-import { totalSavings, calcThermalCost, calcPhevCost, formatEur } from './utils'
+import { calcThermalCost, calcElectricCost, enrichTrip, formatEur } from './utils'
 import ConsumptionChart from './components/ConsumptionChart'
 import BreakevenBar from './components/BreakevenBar'
 import QuickLogModal from './components/QuickLogModal'
@@ -38,54 +38,51 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [tab, setTab] = useState<Tab>('dashboard')
 
-  // merge defaults for any missing config fields (e.g. phevElectricKmPerKwh on old installs)
   const cfg: Config = { ...DEFAULT_CONFIG, ...config }
 
-  const savings = totalSavings(trips, cfg)
-  const electricTrips = trips.filter((t) => t.vehicleType === 'electric')
-  const phevTrips = trips.filter((t) => t.vehicleType === 'phev')
-  const thermalTrips = trips.filter((t) => t.vehicleType === 'thermal')
+  // ── Aggregates ──────────────────────────────────────────────
+  const totalKm = trips.reduce((a, t) => a + t.km, 0)
+  const totalEvKm = trips.reduce((a, t) => a + (t.electricKm ?? 0), 0)
+  const totalHybKm = trips.reduce((a, t) => a + (t.hybridKm ?? 0), 0)
+  const totalGasKm = Math.max(totalKm - totalEvKm - totalHybKm, 0)
 
-  const totalElectricKm = electricTrips.reduce((a, t) => a + t.km, 0)
-  const totalPhevKm = phevTrips.reduce((a, t) => a + t.km, 0)
-  const totalThermalKm = thermalTrips.reduce((a, t) => a + t.km, 0)
+  // Scenario costs on total km
+  const thermalEquiv = calcThermalCost(totalKm, cfg)
+  const bevEquiv = calcElectricCost(totalKm, cfg)
+  const phevActual = trips.reduce((a, t) => a + enrichTrip(t, cfg).actualCost, 0)
 
-  const costPer100Thermal = (100 / cfg.thermalConsumptionKmL) * cfg.gasPricePerLiter
-  const costPer100Electric = cfg.electricConsumptionKwh100 * cfg.electricityPriceKwh
-  const costPer100Phev = (100 / cfg.phevElectricKmPerKwh) * cfg.electricityPriceKwh
+  const savingsVsThermal = thermalEquiv - phevActual  // how much less than pure thermal
+  const savingsVsBev = bevEquiv - phevActual           // negative = BEV would be cheaper
 
-  const savingTrips = [...electricTrips, ...phevTrips]
-
-  const addTrips = (entries: Omit<Trip, 'id'>[]) => {
+  // ── Helpers ─────────────────────────────────────────────────
+  const addTrips = (entries: Omit<Trip, 'id'>[]) =>
     setTrips((prev) => [...prev, ...entries.map((e) => ({ ...e, id: generateId() }))])
-  }
 
   const addTrip = (trip: Omit<Trip, 'id'>) => addTrips([trip])
 
-  const deleteTrip = (id: string) => {
+  const deleteTrip = (id: string) =>
     setTrips((prev) => prev.filter((t) => t.id !== id))
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
+      {/* Header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">BEV Tracker</h1>
-            <p className="text-xs text-gray-400">Monitoraggio consumi</p>
+            <h1 className="text-xl font-bold text-gray-900">PHEV Tracker</h1>
+            <p className="text-xs text-gray-400">Confronto consumi</p>
           </div>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-          >
+          <button onClick={() => setShowSettings(true)}
+            className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
             <Settings className="w-5 h-5 text-gray-600" />
           </button>
         </div>
-
         <div className="max-w-lg mx-auto px-4 pb-0 flex gap-1">
           <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>Dashboard</TabBtn>
           <TabBtn active={tab === 'trips'} onClick={() => setTab('trips')}>
-            Viaggi {trips.length > 0 && <span className="ml-1 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">{trips.length}</span>}
+            Dati {trips.length > 0 && (
+              <span className="ml-1 text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">{trips.length}</span>
+            )}
           </TabBtn>
         </div>
       </div>
@@ -93,78 +90,86 @@ export default function App() {
       <div className="max-w-lg mx-auto px-4 pt-5 space-y-4">
         {tab === 'dashboard' && (
           <>
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg">
-              <div className="flex items-center gap-2 mb-1 opacity-80">
-                <TrendingDown className="w-4 h-4" />
-                <span className="text-sm font-medium">Risparmio totale maturato</span>
-              </div>
-              <div className="text-4xl font-bold tracking-tight">{formatEur(savings)}</div>
-              <div className="mt-3 text-sm opacity-70">
-                {electricTrips.length} viaggi EV · {phevTrips.length} viaggi PHEV · {savingTrips.length} totale
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <CostCard
-                icon={<Fuel className="w-4 h-4 text-orange-500" />}
-                label="Termica"
-                labelColor="text-orange-500"
-                cost={costPer100Thermal}
-                km={totalThermalKm}
-              />
-              <CostCard
-                icon={<Zap className="w-4 h-4 text-blue-500" />}
-                label="Elettrica"
-                labelColor="text-blue-500"
-                cost={costPer100Electric}
-                km={totalElectricKm}
-              />
-              <CostCard
-                icon={<Plug className="w-4 h-4 text-purple-500" />}
-                label="Plug-in"
-                labelColor="text-purple-500"
-                cost={costPer100Phev}
-                km={totalPhevKm}
-                subtitle="solo EV"
-              />
-            </div>
-
-            <BreakevenBar savings={savings} investmentCost={cfg.investmentCost} />
-
+            {/* Total km summary */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Costi cumulativi nel tempo</h3>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-gray-700">Km totali monitorati</span>
+                <span className="text-2xl font-bold text-gray-900">{totalKm.toLocaleString('it-IT')} km</span>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <ModeChip icon={<Zap className="w-3 h-3" />} label="EV" km={totalEvKm} color="text-blue-600 bg-blue-50" />
+                <ModeChip icon={<Plug className="w-3 h-3" />} label="Hybrid" km={totalHybKm} color="text-purple-600 bg-purple-50" />
+                <ModeChip icon={<Fuel className="w-3 h-3" />} label="Benzina" km={totalGasKm} color="text-orange-600 bg-orange-50" />
+              </div>
+            </div>
+
+            {/* 3-way cost comparison */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-5 pt-4 pb-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Confronto costi su {totalKm.toLocaleString('it-IT')} km
+                </p>
+              </div>
+              <div className="grid grid-cols-3 divide-x divide-gray-100">
+                <ScenarioCol
+                  icon={<Fuel className="w-4 h-4 text-orange-500" />}
+                  label="Termica"
+                  sublabel="solo benzina"
+                  cost={thermalEquiv}
+                  variant="neutral"
+                />
+                <ScenarioCol
+                  icon={<Plug className="w-4 h-4 text-purple-600" />}
+                  label="PHEV"
+                  sublabel="costo reale"
+                  cost={phevActual}
+                  variant="highlight"
+                />
+                <ScenarioCol
+                  icon={<Zap className="w-4 h-4 text-blue-500" />}
+                  label="Full BEV"
+                  sublabel="solo elettrico"
+                  cost={bevEquiv}
+                  variant="neutral"
+                />
+              </div>
+            </div>
+
+            {/* Savings cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <SavingsCard
+                label="Risparmio vs Termica"
+                value={savingsVsThermal}
+                icon={<TrendingDown className="w-4 h-4" />}
+                positiveGood
+              />
+              <SavingsCard
+                label="Δ vs Full BEV"
+                value={savingsVsBev}
+                icon={savingsVsBev >= 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+                positiveGood
+                note={savingsVsBev >= 0 ? 'PHEV più economico' : 'BEV sarebbe più economico'}
+              />
+            </div>
+
+            {/* Breakeven bar */}
+            <BreakevenBar savings={savingsVsThermal} investmentCost={cfg.investmentCost} />
+
+            {/* Chart */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Costi cumulativi nel tempo</h3>
+              <p className="text-xs text-gray-400 mb-4">Termica e BEV = scenari equivalenti · PHEV = costo reale</p>
               <ConsumptionChart trips={trips} config={cfg} />
             </div>
 
+            {/* Stats */}
             {trips.length > 0 && (
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Statistiche rapide</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">Ripartizione km</h3>
                 <div className="space-y-3">
-                  <StatRow
-                    label="Costo totale termica"
-                    value={formatEur(thermalTrips.reduce((a, t) => a + calcThermalCost(t.km, cfg), 0))}
-                    color="text-orange-600"
-                  />
-                  <StatRow
-                    label="Costo totale elettrica"
-                    value={formatEur(electricTrips.reduce((a, t) => a + (t.km / 100) * cfg.electricConsumptionKwh100 * cfg.electricityPriceKwh, 0))}
-                    color="text-blue-600"
-                  />
-                  <StatRow
-                    label="Costo totale plug-in"
-                    value={formatEur(phevTrips.reduce((a, t) => a + calcPhevCost(t, cfg), 0))}
-                    color="text-purple-600"
-                  />
-                  <StatRow
-                    label="Risparmio medio per viaggio"
-                    value={savingTrips.length > 0 ? formatEur(savings / savingTrips.length) : '—'}
-                    color="text-green-600"
-                  />
-                  <StatRow
-                    label="Km totali percorsi"
-                    value={`${(totalElectricKm + totalThermalKm + totalPhevKm).toFixed(0)} km`}
-                    color="text-gray-800"
-                  />
+                  <StatRow label="Km in modalità EV" value={`${totalEvKm.toLocaleString('it-IT')} km`} pct={totalKm > 0 ? (totalEvKm / totalKm) * 100 : 0} color="bg-blue-500" />
+                  <StatRow label="Km in full-hybrid" value={`${totalHybKm.toLocaleString('it-IT')} km`} pct={totalKm > 0 ? (totalHybKm / totalKm) * 100 : 0} color="bg-purple-500" />
+                  <StatRow label="Km in benzina pura" value={`${totalGasKm.toLocaleString('it-IT')} km`} pct={totalKm > 0 ? (totalGasKm / totalKm) * 100 : 0} color="bg-orange-400" />
                 </div>
               </div>
             )}
@@ -176,11 +181,10 @@ export default function App() {
         )}
       </div>
 
-      <button
-        onClick={() => setShowSelector(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
-        aria-label="Aggiungi dati"
-      >
+      {/* FAB */}
+      <button onClick={() => setShowSelector(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
+        aria-label="Aggiungi dati">
         <Plus className="w-7 h-7" />
       </button>
 
@@ -203,41 +207,66 @@ export default function App() {
   )
 }
 
-function CostCard({ icon, label, labelColor, cost, km, subtitle }: {
-  icon: React.ReactNode; label: string; labelColor: string
-  cost: number; km: number; subtitle?: string
+// ── Sub-components ────────────────────────────────────────────
+
+function ModeChip({ icon, label, km, color }: { icon: React.ReactNode; label: string; km: number; color: string }) {
+  return (
+    <span className={`flex items-center gap-1 px-2 py-1 rounded-lg font-medium ${color}`}>
+      {icon}{label}: {km.toLocaleString('it-IT')} km
+    </span>
+  )
+}
+
+function ScenarioCol({ icon, label, sublabel, cost, variant }: {
+  icon: React.ReactNode; label: string; sublabel: string; cost: number; variant: 'neutral' | 'highlight'
 }) {
   return (
-    <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
-      <div className="flex items-center gap-1.5 mb-2">
+    <div className={`flex flex-col items-center py-4 px-2 ${variant === 'highlight' ? 'bg-purple-50' : ''}`}>
+      <div className="mb-1">{icon}</div>
+      <div className={`text-xs font-semibold mb-0.5 ${variant === 'highlight' ? 'text-purple-700' : 'text-gray-500'}`}>{label}</div>
+      <div className={`text-base font-bold ${variant === 'highlight' ? 'text-purple-800' : 'text-gray-700'}`}>{formatEur(cost)}</div>
+      <div className="text-xs text-gray-400 mt-0.5">{sublabel}</div>
+    </div>
+  )
+}
+
+function SavingsCard({ label, value, icon, positiveGood, note }: {
+  label: string; value: number; icon: React.ReactNode; positiveGood?: boolean; note?: string
+}) {
+  const good = positiveGood ? value >= 0 : value < 0
+  return (
+    <div className={`rounded-2xl p-4 border shadow-sm ${good ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100'}`}>
+      <div className={`flex items-center gap-1.5 mb-1 ${good ? 'text-green-600' : 'text-orange-500'}`}>
         {icon}
-        <span className={`text-xs font-semibold uppercase tracking-wide ${labelColor}`}>{label}</span>
+        <span className="text-xs font-semibold">{label}</span>
       </div>
-      <div className="text-base font-bold text-gray-800">{formatEur(cost)}</div>
-      <div className="text-xs text-gray-400">/100 km{subtitle ? ` ${subtitle}` : ''}</div>
-      <div className="text-xs text-gray-400 mt-0.5">{km.toFixed(0)} km</div>
+      <div className={`text-xl font-bold ${good ? 'text-green-700' : 'text-orange-600'}`}>
+        {value >= 0 ? '+' : ''}{formatEur(value)}
+      </div>
+      {note && <div className="text-xs text-gray-400 mt-0.5">{note}</div>}
     </div>
   )
 }
 
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-        active ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'
-      }`}
-    >
+    <button onClick={onClick}
+      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${active ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
       {children}
     </button>
   )
 }
 
-function StatRow({ label, value, color }: { label: string; value: string; color: string }) {
+function StatRow({ label, value, pct, color }: { label: string; value: string; pct: number; color: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-gray-500">{label}</span>
-      <span className={`text-sm font-semibold ${color}`}>{value}</span>
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs text-gray-500">{label}</span>
+        <span className="text-xs font-semibold text-gray-700">{value} <span className="text-gray-400 font-normal">({pct.toFixed(0)}%)</span></span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-1.5">
+        <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   )
 }
