@@ -130,7 +130,7 @@ export default function App() {
                 />
                 <ScenarioCol
                   icon={<Zap className="w-4 h-4 text-blue-500" />}
-                  label="Full BEV"
+                  label="BEV"
                   sublabel="solo elettrico"
                   cost={bevEquiv}
                   variant="neutral"
@@ -147,7 +147,7 @@ export default function App() {
                 positiveGood
               />
               <SavingsCard
-                label="Δ vs Full BEV"
+                label="Δ vs BEV"
                 value={savingsVsBev}
                 icon={savingsVsBev >= 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
                 positiveGood
