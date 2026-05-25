@@ -9,6 +9,7 @@ import QuickLogModal from './components/QuickLogModal'
 import MonthlyLogModal from './components/MonthlyLogModal'
 import HistoricalLogModal from './components/HistoricalLogModal'
 import EntryTypeSelector from './components/EntryTypeSelector'
+import EditTripModal from './components/EditTripModal'
 import SettingsPanel from './components/SettingsPanel'
 import TripList from './components/TripList'
 
@@ -35,6 +36,7 @@ export default function App() {
   const [showLog, setShowLog] = useState(false)
   const [showMonthly, setShowMonthly] = useState(false)
   const [showHistorical, setShowHistorical] = useState(false)
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [tab, setTab] = useState<Tab>('dashboard')
 
@@ -62,6 +64,9 @@ export default function App() {
 
   const deleteTrip = (id: string) =>
     setTrips((prev) => prev.filter((t) => t.id !== id))
+
+  const updateTrip = (id: string, updates: Omit<Trip, 'id'>) =>
+    setTrips((prev) => prev.map((t) => t.id === id ? { ...updates, id } : t))
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -177,7 +182,7 @@ export default function App() {
         )}
 
         {tab === 'trips' && (
-          <TripList trips={trips} config={cfg} onDelete={deleteTrip} />
+          <TripList trips={trips} config={cfg} onDelete={deleteTrip} onEdit={setEditingTrip} />
         )}
       </div>
 
@@ -202,6 +207,13 @@ export default function App() {
       {showLog && <QuickLogModal onAdd={addTrip} onClose={() => setShowLog(false)} />}
       {showMonthly && <MonthlyLogModal onAdd={addTrips} onClose={() => setShowMonthly(false)} />}
       {showHistorical && <HistoricalLogModal onAdd={addTrips} onClose={() => setShowHistorical(false)} />}
+      {editingTrip && (
+        <EditTripModal
+          trip={editingTrip}
+          onSave={(updates) => { updateTrip(editingTrip.id, updates); setEditingTrip(null) }}
+          onClose={() => setEditingTrip(null)}
+        />
+      )}
       {showSettings && <SettingsPanel config={cfg} onSave={setConfig} onClose={() => setShowSettings(false)} />}
     </div>
   )
