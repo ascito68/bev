@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Plus, Settings, Fuel, Zap, TrendingDown } from 'lucide-react'
+import { Plus, Settings, Fuel, Zap, TrendingDown, Plug } from 'lucide-react'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import type { Config, Trip } from './types'
-import { totalSavings, calcThermalCost, formatEur } from './utils'
+import { totalSavings, calcThermalCost, calcPhevCost, formatEur } from './utils'
 import ConsumptionChart from './components/ConsumptionChart'
 import BreakevenBar from './components/BreakevenBar'
 import QuickLogModal from './components/QuickLogModal'
@@ -14,6 +14,7 @@ const DEFAULT_CONFIG: Config = {
   thermalConsumptionKmL: 15,
   electricityPriceKwh: 0.22,
   electricConsumptionKwh100: 18,
+  phevElectricKmPerKwh: 4.4,
   investmentCost: 8000,
 }
 
@@ -30,15 +31,23 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [tab, setTab] = useState<Tab>('dashboard')
 
-  const savings = totalSavings(trips, config)
+  // merge defaults for any missing config fields (e.g. phevElectricKmPerKwh on old installs)
+  const cfg: Config = { ...DEFAULT_CONFIG, ...config }
+
+  const savings = totalSavings(trips, cfg)
   const electricTrips = trips.filter((t) => t.vehicleType === 'electric')
+  const phevTrips = trips.filter((t) => t.vehicleType === 'phev')
   const thermalTrips = trips.filter((t) => t.vehicleType === 'thermal')
 
   const totalElectricKm = electricTrips.reduce((a, t) => a + t.km, 0)
+  const totalPhevKm = phevTrips.reduce((a, t) => a + t.km, 0)
   const totalThermalKm = thermalTrips.reduce((a, t) => a + t.km, 0)
 
-  const avgElectricCostPer100km = config.electricConsumptionKwh100 * config.electricityPriceKwh
-  const avgThermalCostPer100km = (100 / config.thermalConsumptionKmL) * config.gasPricePerLiter
+  const costPer100Thermal = (100 / cfg.thermalConsumptionKmL) * cfg.gasPricePerLiter
+  const costPer100Electric = cfg.electricConsumptionKwh100 * cfg.electricityPriceKwh
+  const costPer100Phev = (100 / cfg.phevElectricKmPerKwh) * cfg.electricityPriceKwh
+
+  const savingTrips = [...electricTrips, ...phevTrips]
 
   const addTrip = (trip: Omit<Trip, 'id'>) => {
     setTrips((prev) => [...prev, { ...trip, id: generateId() }])
@@ -50,7 +59,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div>
@@ -65,7 +73,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="max-w-lg mx-auto px-4 pb-0 flex gap-1">
           <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>Dashboard</TabBtn>
           <TabBtn active={tab === 'trips'} onClick={() => setTab('trips')}>
@@ -77,7 +84,6 @@ export default function App() {
       <div className="max-w-lg mx-auto px-4 pt-5 space-y-4">
         {tab === 'dashboard' && (
           <>
-            {/* Savings hero card */}
             <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-1 opacity-80">
                 <TrendingDown className="w-4 h-4" />
@@ -85,64 +91,69 @@ export default function App() {
               </div>
               <div className="text-4xl font-bold tracking-tight">{formatEur(savings)}</div>
               <div className="mt-3 text-sm opacity-70">
-                {electricTrips.length} viaggi elettrici · {totalElectricKm.toFixed(0)} km
+                {electricTrips.length} viaggi EV · {phevTrips.length} viaggi PHEV · {savingTrips.length} totale
               </div>
             </div>
 
-            {/* Cost comparison pills */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Fuel className="w-4 h-4 text-orange-500" />
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Termica</span>
-                </div>
-                <div className="text-xl font-bold text-gray-800">{formatEur(avgThermalCostPer100km)}</div>
-                <div className="text-xs text-gray-400">ogni 100 km</div>
-                <div className="text-xs text-gray-400 mt-1">{totalThermalKm.toFixed(0)} km percorsi</div>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Elettrica</span>
-                </div>
-                <div className="text-xl font-bold text-gray-800">{formatEur(avgElectricCostPer100km)}</div>
-                <div className="text-xs text-gray-400">ogni 100 km</div>
-                <div className="text-xs text-gray-400 mt-1">{totalElectricKm.toFixed(0)} km percorsi</div>
-              </div>
+            <div className="grid grid-cols-3 gap-2">
+              <CostCard
+                icon={<Fuel className="w-4 h-4 text-orange-500" />}
+                label="Termica"
+                labelColor="text-orange-500"
+                cost={costPer100Thermal}
+                km={totalThermalKm}
+              />
+              <CostCard
+                icon={<Zap className="w-4 h-4 text-blue-500" />}
+                label="Elettrica"
+                labelColor="text-blue-500"
+                cost={costPer100Electric}
+                km={totalElectricKm}
+              />
+              <CostCard
+                icon={<Plug className="w-4 h-4 text-purple-500" />}
+                label="Plug-in"
+                labelColor="text-purple-500"
+                cost={costPer100Phev}
+                km={totalPhevKm}
+                subtitle="solo EV"
+              />
             </div>
 
-            {/* Breakeven bar */}
-            <BreakevenBar savings={savings} investmentCost={config.investmentCost} />
+            <BreakevenBar savings={savings} investmentCost={cfg.investmentCost} />
 
-            {/* Chart */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
               <h3 className="text-sm font-semibold text-gray-700 mb-4">Costi cumulativi nel tempo</h3>
-              <ConsumptionChart trips={trips} config={config} />
+              <ConsumptionChart trips={trips} config={cfg} />
             </div>
 
-            {/* Quick stats */}
             {trips.length > 0 && (
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Statistiche rapide</h3>
                 <div className="space-y-3">
                   <StatRow
-                    label="Costo totale termica (storico)"
-                    value={formatEur(trips.filter(t => t.vehicleType === 'thermal').reduce((a, t) => a + calcThermalCost(t.km, config), 0))}
+                    label="Costo totale termica"
+                    value={formatEur(thermalTrips.reduce((a, t) => a + calcThermalCost(t.km, cfg), 0))}
                     color="text-orange-600"
                   />
                   <StatRow
-                    label="Costo totale elettrica (reale)"
-                    value={formatEur(trips.filter(t => t.vehicleType === 'electric').reduce((a, t) => a + (t.km / 100) * config.electricConsumptionKwh100 * config.electricityPriceKwh, 0))}
+                    label="Costo totale elettrica"
+                    value={formatEur(electricTrips.reduce((a, t) => a + (t.km / 100) * cfg.electricConsumptionKwh100 * cfg.electricityPriceKwh, 0))}
                     color="text-blue-600"
                   />
                   <StatRow
+                    label="Costo totale plug-in"
+                    value={formatEur(phevTrips.reduce((a, t) => a + calcPhevCost(t, cfg), 0))}
+                    color="text-purple-600"
+                  />
+                  <StatRow
                     label="Risparmio medio per viaggio"
-                    value={electricTrips.length > 0 ? formatEur(savings / electricTrips.length) : '—'}
+                    value={savingTrips.length > 0 ? formatEur(savings / savingTrips.length) : '—'}
                     color="text-green-600"
                   />
                   <StatRow
                     label="Km totali percorsi"
-                    value={`${(totalElectricKm + totalThermalKm).toFixed(0)} km`}
+                    value={`${(totalElectricKm + totalThermalKm + totalPhevKm).toFixed(0)} km`}
                     color="text-gray-800"
                   />
                 </div>
@@ -152,11 +163,10 @@ export default function App() {
         )}
 
         {tab === 'trips' && (
-          <TripList trips={trips} config={config} onDelete={deleteTrip} />
+          <TripList trips={trips} config={cfg} onDelete={deleteTrip} />
         )}
       </div>
 
-      {/* FAB */}
       <button
         onClick={() => setShowLog(true)}
         className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
@@ -166,7 +176,24 @@ export default function App() {
       </button>
 
       {showLog && <QuickLogModal onAdd={addTrip} onClose={() => setShowLog(false)} />}
-      {showSettings && <SettingsPanel config={config} onSave={setConfig} onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsPanel config={cfg} onSave={setConfig} onClose={() => setShowSettings(false)} />}
+    </div>
+  )
+}
+
+function CostCard({ icon, label, labelColor, cost, km, subtitle }: {
+  icon: React.ReactNode; label: string; labelColor: string
+  cost: number; km: number; subtitle?: string
+}) {
+  return (
+    <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
+      <div className="flex items-center gap-1.5 mb-2">
+        {icon}
+        <span className={`text-xs font-semibold uppercase tracking-wide ${labelColor}`}>{label}</span>
+      </div>
+      <div className="text-base font-bold text-gray-800">{formatEur(cost)}</div>
+      <div className="text-xs text-gray-400">/100 km{subtitle ? ` ${subtitle}` : ''}</div>
+      <div className="text-xs text-gray-400 mt-0.5">{km.toFixed(0)} km</div>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Fuel, Zap } from 'lucide-react'
+import { X, Fuel, Zap, Plug } from 'lucide-react'
 import type { Trip, VehicleType } from '../types'
 import { todayISO } from '../utils'
 
@@ -10,13 +10,24 @@ interface Props {
 
 export default function QuickLogModal({ onAdd, onClose }: Props) {
   const [km, setKm] = useState('')
+  const [electricKm, setElectricKm] = useState('')
   const [date, setDate] = useState(todayISO())
   const [vehicleType, setVehicleType] = useState<VehicleType>('electric')
 
+  const kmVal = parseFloat(km) || 0
+  const electricKmVal = parseFloat(electricKm) || 0
+  const isPhev = vehicleType === 'phev'
+
+  const isValid = kmVal > 0 && (!isPhev || (electricKmVal >= 0 && electricKmVal <= kmVal))
+
   const handleSubmit = () => {
-    const kmVal = parseFloat(km)
-    if (!kmVal || kmVal <= 0) return
-    onAdd({ date, km: kmVal, vehicleType })
+    if (!isValid) return
+    onAdd({
+      date,
+      km: kmVal,
+      vehicleType,
+      ...(isPhev ? { electricKm: electricKmVal } : {}),
+    })
     onClose()
   }
 
@@ -58,19 +69,36 @@ export default function QuickLogModal({ onAdd, onClose }: Props) {
             </div>
           </div>
 
+          {isPhev && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Di cui in modalità elettrica
+              </label>
+              <div className="flex items-center border border-purple-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 bg-purple-50">
+                <input
+                  type="number"
+                  min="0"
+                  max={kmVal || undefined}
+                  step="0.1"
+                  placeholder="0"
+                  value={electricKm}
+                  onChange={(e) => setElectricKm(e.target.value)}
+                  className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none bg-transparent"
+                />
+                <span className="pr-4 text-sm text-purple-400 font-medium">km EV</span>
+              </div>
+              {kmVal > 0 && electricKmVal > kmVal && (
+                <p className="text-xs text-red-500 mt-1 ml-1">Non può superare i km totali</p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Tipo di veicolo</label>
-            <div className="grid grid-cols-2 gap-3">
-              <VehicleToggle
-                type="thermal"
-                selected={vehicleType === 'thermal'}
-                onClick={() => setVehicleType('thermal')}
-              />
-              <VehicleToggle
-                type="electric"
-                selected={vehicleType === 'electric'}
-                onClick={() => setVehicleType('electric')}
-              />
+            <div className="grid grid-cols-3 gap-2">
+              <VehicleToggle type="thermal" selected={vehicleType === 'thermal'} onClick={() => setVehicleType('thermal')} />
+              <VehicleToggle type="electric" selected={vehicleType === 'electric'} onClick={() => setVehicleType('electric')} />
+              <VehicleToggle type="phev" selected={vehicleType === 'phev'} onClick={() => setVehicleType('phev')} />
             </div>
           </div>
         </div>
@@ -78,7 +106,7 @@ export default function QuickLogModal({ onAdd, onClose }: Props) {
         <div className="p-6 pt-0">
           <button
             onClick={handleSubmit}
-            disabled={!km || parseFloat(km) <= 0}
+            disabled={!isValid}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl transition-colors"
           >
             Salva viaggio
@@ -92,20 +120,33 @@ export default function QuickLogModal({ onAdd, onClose }: Props) {
 function VehicleToggle({ type, selected, onClick }: {
   type: VehicleType; selected: boolean; onClick: () => void
 }) {
-  const isElectric = type === 'electric'
+  const styles: Record<VehicleType, { active: string; icon: React.ReactNode; label: string }> = {
+    thermal: {
+      active: 'border-orange-500 bg-orange-50 text-orange-700',
+      icon: <Fuel className="w-5 h-5" />,
+      label: 'Termica',
+    },
+    electric: {
+      active: 'border-blue-500 bg-blue-50 text-blue-700',
+      icon: <Zap className="w-5 h-5" />,
+      label: 'Elettrica',
+    },
+    phev: {
+      active: 'border-purple-500 bg-purple-50 text-purple-700',
+      icon: <Plug className="w-5 h-5" />,
+      label: 'Plug-in',
+    },
+  }
+  const s = styles[type]
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-        selected
-          ? isElectric
-            ? 'border-blue-500 bg-blue-50 text-blue-700'
-            : 'border-orange-500 bg-orange-50 text-orange-700'
-          : 'border-gray-200 text-gray-400 hover:border-gray-300'
+      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+        selected ? s.active : 'border-gray-200 text-gray-400 hover:border-gray-300'
       }`}
     >
-      {isElectric ? <Zap className="w-6 h-6" /> : <Fuel className="w-6 h-6" />}
-      <span className="text-xs font-semibold">{isElectric ? 'Elettrica' : 'Termica'}</span>
+      {s.icon}
+      <span className="text-xs font-semibold">{s.label}</span>
     </button>
   )
 }

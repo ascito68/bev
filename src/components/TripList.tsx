@@ -1,4 +1,4 @@
-import { Fuel, Zap, Trash2 } from 'lucide-react'
+import { Fuel, Zap, Plug, Trash2 } from 'lucide-react'
 import type { Trip } from '../types'
 import type { Config } from '../types'
 import { enrichTrip, formatDate, formatEur } from '../utils'
@@ -24,14 +24,19 @@ export default function TripList({ trips, config, onDelete }: Props) {
   return (
     <div className="space-y-2">
       {sorted.map((trip) => {
-        const { thermalCost, electricCost, saving } = enrichTrip(trip, config)
+        const { thermalCost, actualCost, saving } = enrichTrip(trip, config)
         const isElectric = trip.vehicleType === 'electric'
+        const isPhev = trip.vehicleType === 'phev'
+        const saveTrip = isElectric || isPhev
+
         return (
           <div key={trip.id} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-            <div className={`p-2 rounded-xl ${isElectric ? 'bg-blue-50' : 'bg-orange-50'}`}>
+            <div className={`p-2 rounded-xl ${isElectric ? 'bg-blue-50' : isPhev ? 'bg-purple-50' : 'bg-orange-50'}`}>
               {isElectric
                 ? <Zap className="w-4 h-4 text-blue-500" />
-                : <Fuel className="w-4 h-4 text-orange-500" />
+                : isPhev
+                  ? <Plug className="w-4 h-4 text-purple-500" />
+                  : <Fuel className="w-4 h-4 text-orange-500" />
               }
             </div>
 
@@ -41,14 +46,13 @@ export default function TripList({ trips, config, onDelete }: Props) {
                 <span className="text-xs text-gray-400">{formatDate(trip.date)}</span>
               </div>
               <div className="text-xs text-gray-400 mt-0.5">
-                {isElectric
-                  ? `Costo: ${formatEur(electricCost)} · Equivalente termica: ${formatEur(thermalCost)}`
-                  : `Costo: ${formatEur(thermalCost)}`
-                }
+                {isElectric && `Costo: ${formatEur(actualCost)} · Equiv. termica: ${formatEur(thermalCost)}`}
+                {isPhev && `Costo: ${formatEur(actualCost)} · EV: ${trip.electricKm ?? 0} km · Equiv. termica: ${formatEur(thermalCost)}`}
+                {!saveTrip && `Costo: ${formatEur(actualCost)}`}
               </div>
             </div>
 
-            {isElectric && (
+            {saveTrip && (
               <div className="text-right">
                 <div className="text-sm font-semibold text-green-600">+{formatEur(saving)}</div>
                 <div className="text-xs text-gray-400">risparmio</div>
