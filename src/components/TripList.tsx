@@ -1,4 +1,4 @@
-import { Plug, Trash2, Zap, Fuel } from 'lucide-react'
+import { Plug, Trash2, Zap, Fuel, Pencil } from 'lucide-react'
 import type { Trip, Config } from '../types'
 import { enrichTrip, formatEntryLabel, formatEur } from '../utils'
 
@@ -6,9 +6,10 @@ interface Props {
   trips: Trip[]
   config: Config
   onDelete: (id: string) => void
+  onEdit: (trip: Trip) => void
 }
 
-export default function TripList({ trips, config, onDelete }: Props) {
+export default function TripList({ trips, config, onDelete, onEdit }: Props) {
   const sorted = [...trips].sort((a, b) => b.date.localeCompare(a.date))
 
   if (sorted.length === 0) {
@@ -82,7 +83,11 @@ export default function TripList({ trips, config, onDelete }: Props) {
             <button onClick={() => onDelete(trip.id)}
               className="absolute right-3 bottom-3 p-1.5 hover:bg-red-50 rounded-lg transition-colors text-gray-200 hover:text-red-400 hidden" />
 
-            <div className="flex justify-end mt-2">
+            <div className="flex justify-end gap-1 mt-2">
+              <button onClick={() => onEdit(trip)}
+                className="p-1.5 hover:bg-purple-50 rounded-lg transition-colors text-gray-300 hover:text-purple-500">
+                <Pencil className="w-4 h-4" />
+              </button>
               <button onClick={() => onDelete(trip.id)}
                 className="p-1.5 hover:bg-red-50 rounded-lg transition-colors text-gray-300 hover:text-red-400">
                 <Trash2 className="w-4 h-4" />
