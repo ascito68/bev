@@ -15,16 +15,13 @@ export default function EditTripModal({ trip, onSave, onClose }: Props) {
   const [dateValue, setDateValue] = useState(
     isMonthly ? trip.date.slice(0, 7) : trip.date
   )
-  const [km, setKm] = useState(String(trip.km))
   const [electricKm, setElectricKm] = useState(String(trip.electricKm ?? 0))
   const [hybridKm, setHybridKm] = useState(String(trip.hybridKm ?? 0))
 
-  const kmVal = parseFloat(km) || 0
   const evVal = parseFloat(electricKm) || 0
   const hybVal = parseFloat(hybridKm) || 0
-  const total = evVal + hybVal
-  const gasKm = Math.max(kmVal - total, 0)
-  const isValid = kmVal > 0 && total <= kmVal
+  const kmVal = evVal + hybVal
+  const isValid = kmVal > 0
 
   const handleSave = () => {
     if (!isValid) return
@@ -72,11 +69,6 @@ export default function EditTripModal({ trip, onSave, onClose }: Props) {
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Km totali</label>
-            <KmField value={km} onChange={setKm} autoFocus />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-blue-600 mb-1.5 flex items-center gap-1">
@@ -93,16 +85,15 @@ export default function EditTripModal({ trip, onSave, onClose }: Props) {
           </div>
 
           {kmVal > 0 && (
-            <div className="bg-gray-50 rounded-xl p-3 grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="bg-gray-50 rounded-xl p-3 grid grid-cols-2 gap-2 text-center text-xs">
               <Pill label="EV" value={evVal} color="text-blue-600" />
               <Pill label="Hybrid" value={hybVal} color="text-purple-600" />
-              <Pill label="Benzina" value={gasKm} color="text-orange-600" />
             </div>
           )}
 
-          {total > kmVal && kmVal > 0 && (
-            <p className="text-xs text-red-500">La somma EV+Hybrid supera i km totali</p>
-          )}
+          <div className="text-xs text-gray-400 text-right">
+            Totale: <span className="font-medium text-gray-600">{kmVal.toFixed(1)} km</span>
+          </div>
         </div>
 
         <div className="p-6 pt-0 flex gap-3">

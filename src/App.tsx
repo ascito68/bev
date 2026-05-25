@@ -19,7 +19,7 @@ const DEFAULT_CONFIG: Config = {
   electricityPriceKwh: 0.22,
   electricConsumptionKwh100: 18,
   phevElectricKmPerKwh: 4.4,
-  phevHybridConsumptionKmL: 20,
+  phevHybridConsumptionKmL: 16.5,
   investmentCost: 8000,
 }
 
@@ -43,10 +43,9 @@ export default function App() {
   const cfg: Config = { ...DEFAULT_CONFIG, ...config }
 
   // ── Aggregates ──────────────────────────────────────────────
-  const totalKm = trips.reduce((a, t) => a + t.km, 0)
   const totalEvKm = trips.reduce((a, t) => a + (t.electricKm ?? 0), 0)
   const totalHybKm = trips.reduce((a, t) => a + (t.hybridKm ?? 0), 0)
-  const totalGasKm = Math.max(totalKm - totalEvKm - totalHybKm, 0)
+  const totalKm = totalEvKm + totalHybKm
 
   // Scenario costs on total km
   const thermalEquiv = calcThermalCost(totalKm, cfg)
@@ -104,7 +103,6 @@ export default function App() {
               <div className="flex items-center gap-4 text-xs">
                 <ModeChip icon={<Zap className="w-3 h-3" />} label="EV" km={totalEvKm} color="text-blue-600 bg-blue-50" />
                 <ModeChip icon={<Plug className="w-3 h-3" />} label="Hybrid" km={totalHybKm} color="text-purple-600 bg-purple-50" />
-                <ModeChip icon={<Fuel className="w-3 h-3" />} label="Benzina" km={totalGasKm} color="text-orange-600 bg-orange-50" />
               </div>
             </div>
 
@@ -174,7 +172,6 @@ export default function App() {
                 <div className="space-y-3">
                   <StatRow label="Km in modalità EV" value={`${totalEvKm.toLocaleString('it-IT')} km`} pct={totalKm > 0 ? (totalEvKm / totalKm) * 100 : 0} color="bg-blue-500" />
                   <StatRow label="Km in full-hybrid" value={`${totalHybKm.toLocaleString('it-IT')} km`} pct={totalKm > 0 ? (totalHybKm / totalKm) * 100 : 0} color="bg-purple-500" />
-                  <StatRow label="Km in benzina pura" value={`${totalGasKm.toLocaleString('it-IT')} km`} pct={totalKm > 0 ? (totalGasKm / totalKm) * 100 : 0} color="bg-orange-400" />
                 </div>
               </div>
             )}

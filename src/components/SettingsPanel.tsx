@@ -56,7 +56,6 @@ export default function SettingsPanel({ config, onSave, onClose }: Props) {
               <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Plug-in Hybrid (PHEV)</span>
             </div>
             <div className="space-y-3">
-              <p className="text-xs text-gray-400 -mt-1">Benzina pura: stessi valori del termico</p>
               <Field
                 label="Efficienza modalità EV"
                 unit="km/kWh"
@@ -67,10 +66,11 @@ export default function SettingsPanel({ config, onSave, onClose }: Props) {
               <Field
                 label="Consumo full-hybrid"
                 unit="km/l"
-                value={form.phevHybridConsumptionKmL ?? 20}
+                value={form.phevHybridConsumptionKmL ?? 16.5}
                 onChange={(v) => set('phevHybridConsumptionKmL', v)}
                 step="0.1"
               />
+              <p className="text-xs text-gray-400">Consumo tipico full-hybrid: 15–18 km/l</p>
             </div>
           </div>
 
