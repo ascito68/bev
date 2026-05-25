@@ -11,14 +11,19 @@ interface Props {
 export default function QuickLogModal({ onAdd, onClose }: Props) {
   const [km, setKm] = useState('')
   const [electricKm, setElectricKm] = useState('')
+  const [hybridKm, setHybridKm] = useState('')
   const [date, setDate] = useState(todayISO())
   const [vehicleType, setVehicleType] = useState<VehicleType>('electric')
 
   const kmVal = parseFloat(km) || 0
   const electricKmVal = parseFloat(electricKm) || 0
+  const hybridKmVal = parseFloat(hybridKm) || 0
   const isPhev = vehicleType === 'phev'
+  const phevTotal = electricKmVal + hybridKmVal
 
-  const isValid = kmVal > 0 && (!isPhev || (electricKmVal >= 0 && electricKmVal <= kmVal))
+  const isValid =
+    kmVal > 0 &&
+    (!isPhev || (electricKmVal >= 0 && hybridKmVal >= 0 && phevTotal <= kmVal))
 
   const handleSubmit = () => {
     if (!isValid) return
@@ -26,7 +31,7 @@ export default function QuickLogModal({ onAdd, onClose }: Props) {
       date,
       km: kmVal,
       vehicleType,
-      ...(isPhev ? { electricKm: electricKmVal } : {}),
+      ...(isPhev ? { electricKm: electricKmVal, hybridKm: hybridKmVal } : {}),
     })
     onClose()
   }
@@ -70,25 +75,48 @@ export default function QuickLogModal({ onAdd, onClose }: Props) {
           </div>
 
           {isPhev && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Di cui in modalità elettrica
-              </label>
-              <div className="flex items-center border border-purple-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 bg-purple-50">
-                <input
-                  type="number"
-                  min="0"
-                  max={kmVal || undefined}
-                  step="0.1"
-                  placeholder="0"
-                  value={electricKm}
-                  onChange={(e) => setElectricKm(e.target.value)}
-                  className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none bg-transparent"
-                />
-                <span className="pr-4 text-sm text-purple-400 font-medium">km EV</span>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Km in modalità elettrica (EV)
+                </label>
+                <div className="flex items-center border border-blue-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 bg-blue-50">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="0"
+                    value={electricKm}
+                    onChange={(e) => setElectricKm(e.target.value)}
+                    className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none bg-transparent"
+                  />
+                  <span className="pr-4 text-sm text-blue-400 font-medium">km</span>
+                </div>
               </div>
-              {kmVal > 0 && electricKmVal > kmVal && (
-                <p className="text-xs text-red-500 mt-1 ml-1">Non può superare i km totali</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Km in modalità full-hybrid
+                </label>
+                <div className="flex items-center border border-purple-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-purple-400 bg-purple-50">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="0"
+                    value={hybridKm}
+                    onChange={(e) => setHybridKm(e.target.value)}
+                    className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none bg-transparent"
+                  />
+                  <span className="pr-4 text-sm text-purple-400 font-medium">km</span>
+                </div>
+              </div>
+              {kmVal > 0 && phevTotal > kmVal && (
+                <p className="text-xs text-red-500 ml-1">La somma ({phevTotal} km) supera i km totali ({kmVal} km)</p>
+              )}
+              {kmVal > 0 && phevTotal <= kmVal && phevTotal < kmVal && (
+                <p className="text-xs text-gray-400 ml-1">
+                  Rimanenti in benzina pura: {(kmVal - phevTotal).toFixed(1)} km
+                </p>
               )}
             </div>
           )}
