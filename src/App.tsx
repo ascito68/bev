@@ -15,6 +15,7 @@ const DEFAULT_CONFIG: Config = {
   electricityPriceKwh: 0.22,
   electricConsumptionKwh100: 18,
   phevElectricKmPerKwh: 4.4,
+  phevHybridConsumptionKmL: 20,
   investmentCost: 8000,
 }
 

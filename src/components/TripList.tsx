@@ -47,7 +47,7 @@ export default function TripList({ trips, config, onDelete }: Props) {
               </div>
               <div className="text-xs text-gray-400 mt-0.5">
                 {isElectric && `Costo: ${formatEur(actualCost)} · Equiv. termica: ${formatEur(thermalCost)}`}
-                {isPhev && `Costo: ${formatEur(actualCost)} · EV: ${trip.electricKm ?? 0} km · Equiv. termica: ${formatEur(thermalCost)}`}
+                {isPhev && `Costo: ${formatEur(actualCost)} · EV: ${trip.electricKm ?? 0} km · Hybrid: ${trip.hybridKm ?? 0} km · Equiv. termica: ${formatEur(thermalCost)}`}
                 {!saveTrip && `Costo: ${formatEur(actualCost)}`}
               </div>
             </div>

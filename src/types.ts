@@ -1,12 +1,13 @@
 export type VehicleType = 'thermal' | 'electric' | 'phev'
 
 export interface Config {
-  gasPricePerLiter: number          // €/l
-  thermalConsumptionKmL: number     // km/l
-  electricityPriceKwh: number       // €/kWh
-  electricConsumptionKwh100: number // kWh/100km
-  phevElectricKmPerKwh: number      // km/kWh in modalità elettrica PHEV
-  investmentCost: number            // € costo investimento
+  gasPricePerLiter: number           // €/l
+  thermalConsumptionKmL: number      // km/l
+  electricityPriceKwh: number        // €/kWh
+  electricConsumptionKwh100: number  // kWh/100km
+  phevElectricKmPerKwh: number       // km/kWh in modalità EV pura (PHEV)
+  phevHybridConsumptionKmL: number   // km/l in modalità full-hybrid (PHEV)
+  investmentCost: number             // € costo investimento
 }
 
 export interface Trip {
@@ -14,7 +15,8 @@ export interface Trip {
   date: string
   km: number
   vehicleType: VehicleType
-  electricKm?: number  // solo per PHEV: km percorsi in modalità elettrica
+  electricKm?: number  // PHEV: km in modalità EV pura
+  hybridKm?: number    // PHEV: km in modalità full-hybrid
 }
 
 export interface TripWithSavings extends Trip {
