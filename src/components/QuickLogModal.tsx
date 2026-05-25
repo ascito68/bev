@@ -41,7 +41,7 @@ export default function QuickLogModal({ onAdd, onClose }: Props) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Data</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
