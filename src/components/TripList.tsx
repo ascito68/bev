@@ -1,7 +1,7 @@
 import { Fuel, Zap, Plug, Trash2 } from 'lucide-react'
 import type { Trip } from '../types'
 import type { Config } from '../types'
-import { enrichTrip, formatDate, formatEur } from '../utils'
+import { enrichTrip, formatEntryLabel, formatEur } from '../utils'
 
 interface Props {
   trips: Trip[]
@@ -41,9 +41,15 @@ export default function TripList({ trips, config, onDelete }: Props) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-semibold text-gray-800">{trip.km} km</span>
-                <span className="text-xs text-gray-400">{formatDate(trip.date)}</span>
+                <span className="text-xs text-gray-400">{formatEntryLabel(trip)}</span>
+                {trip.entryType === 'monthly' && (
+                  <span className="text-xs bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-medium">Mensile</span>
+                )}
+                {trip.entryType === 'historical' && (
+                  <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full font-medium">Storico</span>
+                )}
               </div>
               <div className="text-xs text-gray-400 mt-0.5">
                 {isElectric && `Costo: ${formatEur(actualCost)} · Equiv. termica: ${formatEur(thermalCost)}`}

@@ -42,7 +42,14 @@ export function formatEur(value: number): string {
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+export function formatEntryLabel(trip: import('./types').Trip): string {
+  if (trip.entryType === 'historical') return 'Storico iniziale'
+  if (trip.entryType === 'monthly')
+    return new Date(trip.date + 'T12:00:00').toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
+  return formatDate(trip.date)
 }
 
 export function todayISO(): string {
