@@ -1,4 +1,5 @@
 export type VehicleType = 'thermal' | 'electric' | 'phev'
+export type EntryType = 'trip' | 'monthly' | 'historical'
 
 export interface Config {
   gasPricePerLiter: number           // €/l
@@ -12,11 +13,12 @@ export interface Config {
 
 export interface Trip {
   id: string
-  date: string
+  date: string          // ISO date; monthly → YYYY-MM-01
   km: number
   vehicleType: VehicleType
-  electricKm?: number  // PHEV: km in modalità EV pura
-  hybridKm?: number    // PHEV: km in modalità full-hybrid
+  electricKm?: number   // PHEV: km in modalità EV pura
+  hybridKm?: number     // PHEV: km in modalità full-hybrid
+  entryType?: EntryType // undefined = 'trip'
 }
 
 export interface TripWithSavings extends Trip {

@@ -6,6 +6,9 @@ import { totalSavings, calcThermalCost, calcPhevCost, formatEur } from './utils'
 import ConsumptionChart from './components/ConsumptionChart'
 import BreakevenBar from './components/BreakevenBar'
 import QuickLogModal from './components/QuickLogModal'
+import MonthlyLogModal from './components/MonthlyLogModal'
+import HistoricalLogModal from './components/HistoricalLogModal'
+import EntryTypeSelector from './components/EntryTypeSelector'
 import SettingsPanel from './components/SettingsPanel'
 import TripList from './components/TripList'
 
@@ -28,7 +31,10 @@ type Tab = 'dashboard' | 'trips'
 export default function App() {
   const [config, setConfig] = useLocalStorage<Config>('bev-config', DEFAULT_CONFIG)
   const [trips, setTrips] = useLocalStorage<Trip[]>('bev-trips', [])
+  const [showSelector, setShowSelector] = useState(false)
   const [showLog, setShowLog] = useState(false)
+  const [showMonthly, setShowMonthly] = useState(false)
+  const [showHistorical, setShowHistorical] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [tab, setTab] = useState<Tab>('dashboard')
 
@@ -50,9 +56,11 @@ export default function App() {
 
   const savingTrips = [...electricTrips, ...phevTrips]
 
-  const addTrip = (trip: Omit<Trip, 'id'>) => {
-    setTrips((prev) => [...prev, { ...trip, id: generateId() }])
+  const addTrips = (entries: Omit<Trip, 'id'>[]) => {
+    setTrips((prev) => [...prev, ...entries.map((e) => ({ ...e, id: generateId() }))])
   }
+
+  const addTrip = (trip: Omit<Trip, 'id'>) => addTrips([trip])
 
   const deleteTrip = (id: string) => {
     setTrips((prev) => prev.filter((t) => t.id !== id))
@@ -169,14 +177,27 @@ export default function App() {
       </div>
 
       <button
-        onClick={() => setShowLog(true)}
+        onClick={() => setShowSelector(true)}
         className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
-        aria-label="Aggiungi viaggio"
+        aria-label="Aggiungi dati"
       >
         <Plus className="w-7 h-7" />
       </button>
 
+      {showSelector && (
+        <EntryTypeSelector
+          onSelect={(mode) => {
+            setShowSelector(false)
+            if (mode === 'trip') setShowLog(true)
+            else if (mode === 'monthly') setShowMonthly(true)
+            else setShowHistorical(true)
+          }}
+          onClose={() => setShowSelector(false)}
+        />
+      )}
       {showLog && <QuickLogModal onAdd={addTrip} onClose={() => setShowLog(false)} />}
+      {showMonthly && <MonthlyLogModal onAdd={addTrips} onClose={() => setShowMonthly(false)} />}
+      {showHistorical && <HistoricalLogModal onAdd={addTrips} onClose={() => setShowHistorical(false)} />}
       {showSettings && <SettingsPanel config={cfg} onSave={setConfig} onClose={() => setShowSettings(false)} />}
     </div>
   )
