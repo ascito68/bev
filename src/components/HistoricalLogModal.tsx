@@ -10,20 +10,17 @@ interface Props {
 
 export default function HistoricalLogModal({ onAdd, onClose }: Props) {
   const [date, setDate] = useState(todayISO())
-  const [km, setKm] = useState('')
   const [electricKm, setElectricKm] = useState('')
   const [hybridKm, setHybridKm] = useState('')
 
-  const kmVal = parseFloat(km) || 0
   const evVal = parseFloat(electricKm) || 0
   const hybVal = parseFloat(hybridKm) || 0
-  const total = evVal + hybVal
-  const gasKm = Math.max(kmVal - total, 0)
-  const isValid = kmVal > 0 && total <= kmVal
+  const totalKm = evVal + hybVal
+  const isValid = totalKm > 0
 
   const handleSubmit = () => {
     if (!isValid) return
-    onAdd([{ date, km: kmVal, vehicleType: 'phev', entryType: 'historical', electricKm: evVal, hybridKm: hybVal }])
+    onAdd([{ date, km: totalKm, vehicleType: 'phev', entryType: 'historical', electricKm: evVal, hybridKm: hybVal }])
     onClose()
   }
 
@@ -50,17 +47,12 @@ export default function HistoricalLogModal({ onAdd, onClose }: Props) {
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Km totali percorsi</label>
-            <KmField value={km} onChange={setKm} autoFocus />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-blue-600 mb-1.5 flex items-center gap-1">
                 <Zap className="w-3 h-3" /> Modalità EV
               </label>
-              <KmField value={electricKm} onChange={setElectricKm} accent="blue" />
+              <KmField value={electricKm} onChange={setElectricKm} accent="blue" autoFocus />
             </div>
             <div>
               <label className="block text-xs font-medium text-purple-600 mb-1.5 flex items-center gap-1">
@@ -70,17 +62,16 @@ export default function HistoricalLogModal({ onAdd, onClose }: Props) {
             </div>
           </div>
 
-          {kmVal > 0 && (
-            <div className="bg-gray-50 rounded-xl p-3 grid grid-cols-3 gap-2 text-center text-xs">
+          {totalKm > 0 && (
+            <div className="bg-gray-50 rounded-xl p-3 grid grid-cols-2 gap-2 text-center text-xs">
               <Pill label="EV" value={evVal} color="text-blue-600" />
               <Pill label="Hybrid" value={hybVal} color="text-purple-600" />
-              <Pill label="Benzina" value={gasKm} color="text-orange-600" />
             </div>
           )}
 
-          {total > kmVal && kmVal > 0 && (
-            <p className="text-xs text-red-500">La somma EV+Hybrid supera i km totali</p>
-          )}
+          <div className="text-xs text-gray-400 text-right">
+            Totale: <span className="font-medium text-gray-600">{totalKm.toFixed(0)} km</span>
+          </div>
         </div>
 
         <div className="p-6 pt-0">

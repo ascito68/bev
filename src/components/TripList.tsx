@@ -1,4 +1,4 @@
-import { Plug, Trash2, Zap, Fuel, Pencil } from 'lucide-react'
+import { Plug, Trash2, Zap, Pencil } from 'lucide-react'
 import type { Trip, Config } from '../types'
 import { enrichTrip, formatEntryLabel, formatEur } from '../utils'
 
@@ -27,7 +27,6 @@ export default function TripList({ trips, config, onDelete, onEdit }: Props) {
         const { thermalCost, actualCost, saving } = enrichTrip(trip, config)
         const evKm = trip.electricKm ?? 0
         const hybKm = trip.hybridKm ?? 0
-        const gasKm = Math.max(trip.km - evKm - hybKm, 0)
 
         return (
           <div key={trip.id} className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
@@ -58,11 +57,6 @@ export default function TripList({ trips, config, onDelete, onEdit }: Props) {
                   {hybKm > 0 && (
                     <span className="flex items-center gap-1 text-xs text-purple-600">
                       <Plug className="w-3 h-3" />{hybKm} km hybrid
-                    </span>
-                  )}
-                  {gasKm > 0 && (
-                    <span className="flex items-center gap-1 text-xs text-orange-600">
-                      <Fuel className="w-3 h-3" />{gasKm.toFixed(0)} km benz.
                     </span>
                   )}
                 </div>

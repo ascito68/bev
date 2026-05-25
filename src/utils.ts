@@ -11,11 +11,9 @@ export function calcElectricCost(km: number, cfg: Config): number {
 export function calcPhevCost(trip: Trip, cfg: Config): number {
   const electricKm = trip.electricKm ?? 0
   const hybridKm = trip.hybridKm ?? 0
-  const gasKm = Math.max(trip.km - electricKm - hybridKm, 0)
   const evCost = (electricKm / (cfg.phevElectricKmPerKwh ?? 4.4)) * cfg.electricityPriceKwh
-  const hybridCost = (hybridKm / (cfg.phevHybridConsumptionKmL ?? 20)) * cfg.gasPricePerLiter
-  const gasCost = (gasKm / cfg.thermalConsumptionKmL) * cfg.gasPricePerLiter
-  return evCost + hybridCost + gasCost
+  const hybridCost = (hybridKm / (cfg.phevHybridConsumptionKmL ?? 16.5)) * cfg.gasPricePerLiter
+  return evCost + hybridCost
 }
 
 export function enrichTrip(trip: Trip, cfg: Config): TripWithSavings {
