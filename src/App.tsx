@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Plus, Settings, Fuel, Zap, Plug, TrendingDown, TrendingUp } from 'lucide-react'
-import { useLocalStorage } from './hooks/useLocalStorage'
+import { useState, useEffect } from 'react'
+import { Plus, Settings, Fuel, Zap, Plug, TrendingDown, TrendingUp, LogOut } from 'lucide-react'
+import { supabase } from './lib/supabase'
 import type { Config, Trip } from './types'
 import { calcThermalCost, calcElectricCost, enrichTrip, formatEur } from './utils'
 import ConsumptionChart from './components/ConsumptionChart'
@@ -12,6 +12,7 @@ import EntryTypeSelector from './components/EntryTypeSelector'
 import EditTripModal from './components/EditTripModal'
 import SettingsPanel from './components/SettingsPanel'
 import TripList from './components/TripList'
+import AuthPage from './components/AuthPage'
 
 const DEFAULT_CONFIG: Config = {
   gasPricePerLiter: 1.85,
@@ -27,11 +28,61 @@ function generateId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function dbToTrip(row: any): Trip {
+  return {
+    id: row.id,
+    date: row.date,
+    km: row.km,
+    vehicleType: row.vehicle_type,
+    entryType: row.entry_type,
+    electricKm: Number(row.electric_km ?? 0),
+    hybridKm: Number(row.hybrid_km ?? 0),
+  }
+}
+
+function tripToDb(trip: Omit<Trip, 'id'>, userId: string, id: string) {
+  return {
+    id,
+    user_id: userId,
+    date: trip.date,
+    km: trip.km,
+    vehicle_type: trip.vehicleType,
+    entry_type: trip.entryType ?? 'trip',
+    electric_km: trip.electricKm ?? 0,
+    hybrid_km: trip.hybridKm ?? 0,
+  }
+}
+
 type Tab = 'dashboard' | 'trips'
 
 export default function App() {
-  const [config, setConfig] = useLocalStorage<Config>('bev-config', DEFAULT_CONFIG)
-  const [trips, setTrips] = useLocalStorage<Trip[]>('bev-trips', [])
+  const [userId, setUserId] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState('')
+  const [authLoading, setAuthLoading] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user.id ?? null)
+      setUserEmail(session?.user.email ?? '')
+      setAuthLoading(false)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user.id ?? null)
+      setUserEmail(session?.user.email ?? '')
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (authLoading) return <Spinner />
+  if (!userId) return <AuthPage />
+  return <MainApp userId={userId} userEmail={userEmail} />
+}
+
+function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
+  const [config, setConfigState] = useState<Config>(DEFAULT_CONFIG)
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
   const [showSelector, setShowSelector] = useState(false)
   const [showLog, setShowLog] = useState(false)
   const [showMonthly, setShowMonthly] = useState(false)
@@ -40,6 +91,20 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [tab, setTab] = useState<Tab>('dashboard')
 
+  useEffect(() => {
+    Promise.all([fetchTrips(), fetchConfig()]).finally(() => setDataLoading(false))
+  }, [userId])
+
+  async function fetchTrips() {
+    const { data } = await supabase.from('trips').select('*').eq('user_id', userId)
+    if (data) setTrips(data.map(dbToTrip))
+  }
+
+  async function fetchConfig() {
+    const { data } = await supabase.from('configs').select('data').eq('user_id', userId).single()
+    if (data?.data) setConfigState({ ...DEFAULT_CONFIG, ...(data.data as Config) })
+  }
+
   const cfg: Config = { ...DEFAULT_CONFIG, ...config }
 
   // ── Aggregates ──────────────────────────────────────────────
@@ -47,25 +112,42 @@ export default function App() {
   const totalHybKm = trips.reduce((a, t) => a + (t.hybridKm ?? 0), 0)
   const totalKm = totalEvKm + totalHybKm
 
-  // Scenario costs on total km
   const thermalEquiv = calcThermalCost(totalKm, cfg)
   const bevEquiv = calcElectricCost(totalKm, cfg)
   const phevActual = trips.reduce((a, t) => a + enrichTrip(t, cfg).actualCost, 0)
+  const savingsVsThermal = thermalEquiv - phevActual
+  const savingsVsBev = bevEquiv - phevActual
 
-  const savingsVsThermal = thermalEquiv - phevActual  // how much less than pure thermal
-  const savingsVsBev = bevEquiv - phevActual           // negative = BEV would be cheaper
-
-  // ── Helpers ─────────────────────────────────────────────────
-  const addTrips = (entries: Omit<Trip, 'id'>[]) =>
-    setTrips((prev) => [...prev, ...entries.map((e) => ({ ...e, id: generateId() }))])
+  // ── CRUD ────────────────────────────────────────────────────
+  const addTrips = async (entries: Omit<Trip, 'id'>[]) => {
+    const rows = entries.map(e => tripToDb(e, userId, generateId()))
+    const { error } = await supabase.from('trips').insert(rows)
+    if (!error) setTrips(prev => [...prev, ...rows.map(dbToTrip)])
+  }
 
   const addTrip = (trip: Omit<Trip, 'id'>) => addTrips([trip])
 
-  const deleteTrip = (id: string) =>
-    setTrips((prev) => prev.filter((t) => t.id !== id))
+  const deleteTrip = async (id: string) => {
+    await supabase.from('trips').delete().eq('id', id).eq('user_id', userId)
+    setTrips(prev => prev.filter(t => t.id !== id))
+  }
 
-  const updateTrip = (id: string, updates: Omit<Trip, 'id'>) =>
-    setTrips((prev) => prev.map((t) => t.id === id ? { ...updates, id } : t))
+  const updateTrip = async (id: string, updates: Omit<Trip, 'id'>) => {
+    const row = tripToDb(updates, userId, id)
+    await supabase.from('trips').update(row).eq('id', id).eq('user_id', userId)
+    setTrips(prev => prev.map(t => t.id === id ? { ...updates, id } : t))
+  }
+
+  const saveConfig = async (newConfig: Config) => {
+    setConfigState(newConfig)
+    await supabase.from('configs').upsert({
+      user_id: userId,
+      data: newConfig,
+      updated_at: new Date().toISOString(),
+    })
+  }
+
+  if (dataLoading) return <Spinner />
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -76,10 +158,17 @@ export default function App() {
             <h1 className="text-xl font-bold text-gray-900">PHEV Tracker</h1>
             <p className="text-xs text-gray-400">Confronto consumi</p>
           </div>
-          <button onClick={() => setShowSettings(true)}
-            className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
-            <Settings className="w-5 h-5 text-gray-600" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowSettings(true)}
+              className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+              <Settings className="w-5 h-5 text-gray-600" />
+            </button>
+            <button onClick={() => supabase.auth.signOut()}
+              className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+              title={`Esci (${userEmail})`}>
+              <LogOut className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </div>
         <div className="max-w-lg mx-auto px-4 pb-0 flex gap-1">
           <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>Dashboard</TabBtn>
@@ -114,27 +203,9 @@ export default function App() {
                 </p>
               </div>
               <div className="grid grid-cols-3 divide-x divide-gray-100">
-                <ScenarioCol
-                  icon={<Fuel className="w-4 h-4 text-orange-500" />}
-                  label="Termica"
-                  sublabel="solo benzina"
-                  cost={thermalEquiv}
-                  variant="neutral"
-                />
-                <ScenarioCol
-                  icon={<Plug className="w-4 h-4 text-purple-600" />}
-                  label="PHEV"
-                  sublabel="costo reale"
-                  cost={phevActual}
-                  variant="highlight"
-                />
-                <ScenarioCol
-                  icon={<Zap className="w-4 h-4 text-blue-500" />}
-                  label="BEV"
-                  sublabel="solo elettrico"
-                  cost={bevEquiv}
-                  variant="neutral"
-                />
+                <ScenarioCol icon={<Fuel className="w-4 h-4 text-orange-500" />} label="Termica" sublabel="solo benzina" cost={thermalEquiv} variant="neutral" />
+                <ScenarioCol icon={<Plug className="w-4 h-4 text-purple-600" />} label="PHEV" sublabel="costo reale" cost={phevActual} variant="highlight" />
+                <ScenarioCol icon={<Zap className="w-4 h-4 text-blue-500" />} label="BEV" sublabel="solo elettrico" cost={bevEquiv} variant="neutral" />
               </div>
             </div>
 
@@ -211,7 +282,17 @@ export default function App() {
           onClose={() => setEditingTrip(null)}
         />
       )}
-      {showSettings && <SettingsPanel config={cfg} onSave={setConfig} onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsPanel config={cfg} onSave={saveConfig} onClose={() => setShowSettings(false)} />}
+    </div>
+  )
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function Spinner() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 }
