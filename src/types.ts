@@ -5,7 +5,7 @@ export interface Config {
   gasPricePerLiter: number           // €/l
   thermalConsumptionKmL: number      // km/l
   electricityPriceKwh: number        // €/kWh
-  electricConsumptionKwh100: number  // kWh/100km
+  electricConsumptionKmKwh: number   // km/kWh (BEV)
   phevElectricKmPerKwh: number       // km/kWh in modalità EV pura (PHEV)
   phevHybridConsumptionKmL: number   // km/l in modalità full-hybrid (PHEV)
   investmentCost: number             // € costo investimento

@@ -18,7 +18,7 @@ const DEFAULT_CONFIG: Config = {
   gasPricePerLiter: 1.85,
   thermalConsumptionKmL: 15,
   electricityPriceKwh: 0.22,
-  electricConsumptionKwh100: 18,
+  electricConsumptionKmKwh: 5.5,
   phevElectricKmPerKwh: 4.4,
   phevHybridConsumptionKmL: 16.5,
   investmentCost: 8000,

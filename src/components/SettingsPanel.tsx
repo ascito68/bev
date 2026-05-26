@@ -46,7 +46,7 @@ export default function SettingsPanel({ config, onSave, onClose }: Props) {
             </div>
             <div className="space-y-3">
               <Field label="Costo elettricità" unit="€/kWh" value={form.electricityPriceKwh} onChange={(v) => set('electricityPriceKwh', v)} step="0.01" />
-              <Field label="Consumo" unit="kWh/100km" value={form.electricConsumptionKwh100} onChange={(v) => set('electricConsumptionKwh100', v)} step="0.1" />
+              <Field label="Consumo" unit="km/kWh" value={form.electricConsumptionKmKwh ?? 5.5} onChange={(v) => set('electricConsumptionKmKwh', v)} step="0.1" />
             </div>
           </div>
 
