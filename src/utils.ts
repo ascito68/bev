@@ -5,7 +5,7 @@ export function calcThermalCost(km: number, cfg: Config): number {
 }
 
 export function calcElectricCost(km: number, cfg: Config): number {
-  return (km / 100) * cfg.electricConsumptionKwh100 * cfg.electricityPriceKwh
+  return (km / (cfg.electricConsumptionKmKwh ?? 5.5)) * cfg.electricityPriceKwh
 }
 
 export function calcPhevCost(trip: Trip, cfg: Config): number {

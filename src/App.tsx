@@ -18,7 +18,7 @@ const DEFAULT_CONFIG: Config = {
   gasPricePerLiter: 1.85,
   thermalConsumptionKmL: 15,
   electricityPriceKwh: 0.22,
-  electricConsumptionKwh100: 18,
+  electricConsumptionKmKwh: 5.5,
   phevElectricKmPerKwh: 4.4,
   phevHybridConsumptionKmL: 16.5,
   investmentCost: 8000,
@@ -98,7 +98,7 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
 
   async function fetchTrips() {
     const { data, error } = await supabase.from('trips').select('*').eq('user_id', userId)
-    if (error) setDbError(`Fetch trips: ${error.message} (code: ${error.code})`)
+    if (error) setDbError(`Fetch trips: ${error.message}`)
     else if (data) setTrips(data.map(dbToTrip))
   }
 
@@ -120,7 +120,7 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
   const savingsVsThermal = thermalEquiv - phevActual
   const savingsVsBev = bevEquiv - phevActual
 
-  // ── CRUD ───────────────────────────────────────────────────────────
+  // ── CRUD ────────────────────────────────────────────────────
   const addTrips = async (entries: Omit<Trip, 'id'>[]) => {
     const rows = entries.map(e => tripToDb(e, userId, generateId()))
     const { error } = await supabase.from('trips').insert(rows)
