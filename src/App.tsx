@@ -83,6 +83,7 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
   const [config, setConfigState] = useState<Config>(DEFAULT_CONFIG)
   const [trips, setTrips] = useState<Trip[]>([])
   const [dataLoading, setDataLoading] = useState(true)
+  const [dbError, setDbError] = useState('')
   const [showSelector, setShowSelector] = useState(false)
   const [showLog, setShowLog] = useState(false)
   const [showMonthly, setShowMonthly] = useState(false)
@@ -96,8 +97,9 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
   }, [userId])
 
   async function fetchTrips() {
-    const { data } = await supabase.from('trips').select('*').eq('user_id', userId)
-    if (data) setTrips(data.map(dbToTrip))
+    const { data, error } = await supabase.from('trips').select('*').eq('user_id', userId)
+    if (error) setDbError(`Fetch trips: ${error.message}`)
+    else if (data) setTrips(data.map(dbToTrip))
   }
 
   async function fetchConfig() {
@@ -122,35 +124,45 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
   const addTrips = async (entries: Omit<Trip, 'id'>[]) => {
     const rows = entries.map(e => tripToDb(e, userId, generateId()))
     const { error } = await supabase.from('trips').insert(rows)
-    if (!error) setTrips(prev => [...prev, ...rows.map(dbToTrip)])
+    if (error) { setDbError(`Insert: ${error.message} (code: ${error.code})`); return }
+    setTrips(prev => [...prev, ...rows.map(dbToTrip)])
   }
 
   const addTrip = (trip: Omit<Trip, 'id'>) => addTrips([trip])
 
   const deleteTrip = async (id: string) => {
-    await supabase.from('trips').delete().eq('id', id).eq('user_id', userId)
+    const { error } = await supabase.from('trips').delete().eq('id', id).eq('user_id', userId)
+    if (error) { setDbError(`Delete: ${error.message}`); return }
     setTrips(prev => prev.filter(t => t.id !== id))
   }
 
   const updateTrip = async (id: string, updates: Omit<Trip, 'id'>) => {
     const row = tripToDb(updates, userId, id)
-    await supabase.from('trips').update(row).eq('id', id).eq('user_id', userId)
+    const { error } = await supabase.from('trips').update(row).eq('id', id).eq('user_id', userId)
+    if (error) { setDbError(`Update: ${error.message}`); return }
     setTrips(prev => prev.map(t => t.id === id ? { ...updates, id } : t))
   }
 
   const saveConfig = async (newConfig: Config) => {
     setConfigState(newConfig)
-    await supabase.from('configs').upsert({
+    const { error } = await supabase.from('configs').upsert({
       user_id: userId,
       data: newConfig,
       updated_at: new Date().toISOString(),
     })
+    if (error) setDbError(`Config: ${error.message}`)
   }
 
   if (dataLoading) return <Spinner />
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
+      {dbError && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-start justify-between gap-3">
+          <p className="text-xs text-red-700 font-mono break-all">{dbError}</p>
+          <button onClick={() => setDbError('')} className="text-red-400 hover:text-red-600 shrink-0 text-sm">✕</button>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
