@@ -38,6 +38,8 @@ function dbToTrip(row: any): Trip {
     entryType: row.entry_type,
     electricKm: Number(row.electric_km ?? 0),
     hybridKm: Number(row.hybrid_km ?? 0),
+    gasPriceOverride: row.gas_price_override ?? undefined,
+    electricityPriceOverride: row.electricity_price_override ?? undefined,
   }
 }
 
@@ -51,6 +53,8 @@ function tripToDb(trip: Omit<Trip, 'id'>, userId: string, id: string) {
     entry_type: trip.entryType ?? 'trip',
     electric_km: trip.electricKm ?? 0,
     hybrid_km: trip.hybridKm ?? 0,
+    gas_price_override: trip.gasPriceOverride ?? null,
+    electricity_price_override: trip.electricityPriceOverride ?? null,
   }
 }
 
@@ -298,14 +302,16 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
           onClose={() => setShowSelector(false)}
         />
       )}
-      {showLog && <QuickLogModal onAdd={addTrip} onClose={() => setShowLog(false)} />}
-      {showMonthly && <MonthlyLogModal onAdd={addTrips} onClose={() => setShowMonthly(false)} />}
-      {showHistorical && <HistoricalLogModal onAdd={addTrips} onClose={() => setShowHistorical(false)} />}
+      {showLog && <QuickLogModal onAdd={addTrip} onClose={() => setShowLog(false)} defaultGasPrice={cfg.gasPricePerLiter} defaultElectricityPrice={cfg.electricityPriceKwh} />}
+      {showMonthly && <MonthlyLogModal onAdd={addTrips} onClose={() => setShowMonthly(false)} defaultGasPrice={cfg.gasPricePerLiter} defaultElectricityPrice={cfg.electricityPriceKwh} />}
+      {showHistorical && <HistoricalLogModal onAdd={addTrips} onClose={() => setShowHistorical(false)} defaultGasPrice={cfg.gasPricePerLiter} defaultElectricityPrice={cfg.electricityPriceKwh} />}
       {editingTrip && (
         <EditTripModal
           trip={editingTrip}
           onSave={(updates) => { updateTrip(editingTrip.id, updates); setEditingTrip(null) }}
           onClose={() => setEditingTrip(null)}
+          defaultGasPrice={cfg.gasPricePerLiter}
+          defaultElectricityPrice={cfg.electricityPriceKwh}
         />
       )}
       {showSettings && <SettingsPanel config={cfg} onSave={saveConfig} onClose={() => setShowSettings(false)} />}

@@ -19,6 +19,8 @@ export interface Trip {
   electricKm?: number   // PHEV: km in modalità EV pura
   hybridKm?: number     // PHEV: km in modalità full-hybrid
   entryType?: EntryType // undefined = 'trip'
+  gasPriceOverride?: number          // €/l override per questo record
+  electricityPriceOverride?: number  // €/kWh override per questo record
 }
 
 export interface TripWithSavings extends Trip {

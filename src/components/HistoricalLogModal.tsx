@@ -2,16 +2,21 @@ import { useState } from 'react'
 import { X, Zap, Plug } from 'lucide-react'
 import type { Trip } from '../types'
 import { todayISO } from '../utils'
+import PriceOverrides, { parsePriceOverride } from './PriceOverrides'
 
 interface Props {
   onAdd: (trips: Omit<Trip, 'id'>[]) => void
   onClose: () => void
+  defaultGasPrice: number
+  defaultElectricityPrice: number
 }
 
-export default function HistoricalLogModal({ onAdd, onClose }: Props) {
+export default function HistoricalLogModal({ onAdd, onClose, defaultGasPrice, defaultElectricityPrice }: Props) {
   const [date, setDate] = useState(todayISO())
   const [electricKm, setElectricKm] = useState('')
   const [hybridKm, setHybridKm] = useState('')
+  const [gasPrice, setGasPrice] = useState('')
+  const [electricityPrice, setElectricityPrice] = useState('')
 
   const evVal = parseFloat(electricKm) || 0
   const hybVal = parseFloat(hybridKm) || 0
@@ -20,7 +25,12 @@ export default function HistoricalLogModal({ onAdd, onClose }: Props) {
 
   const handleSubmit = () => {
     if (!isValid) return
-    onAdd([{ date, km: totalKm, vehicleType: 'phev', entryType: 'historical', electricKm: evVal, hybridKm: hybVal }])
+    onAdd([{
+      date, km: totalKm, vehicleType: 'phev', entryType: 'historical',
+      electricKm: evVal, hybridKm: hybVal,
+      gasPriceOverride: parsePriceOverride(gasPrice),
+      electricityPriceOverride: parsePriceOverride(electricityPrice),
+    }])
     onClose()
   }
 
@@ -72,6 +82,15 @@ export default function HistoricalLogModal({ onAdd, onClose }: Props) {
           <div className="text-xs text-gray-400 text-right">
             Totale: <span className="font-medium text-gray-600">{totalKm.toFixed(0)} km</span>
           </div>
+
+          <PriceOverrides
+            defaultGasPrice={defaultGasPrice}
+            defaultElectricityPrice={defaultElectricityPrice}
+            gasPrice={gasPrice}
+            electricityPrice={electricityPrice}
+            onGasChange={setGasPrice}
+            onElectricityChange={setElectricityPrice}
+          />
         </div>
 
         <div className="p-6 pt-0">
