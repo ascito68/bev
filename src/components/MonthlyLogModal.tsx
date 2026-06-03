@@ -1,19 +1,24 @@
 import { useState } from 'react'
 import { X, Zap, Plug } from 'lucide-react'
 import type { Trip } from '../types'
+import PriceOverrides, { parsePriceOverride } from './PriceOverrides'
 
 interface Props {
   onAdd: (trips: Omit<Trip, 'id'>[]) => void
   onClose: () => void
+  defaultGasPrice: number
+  defaultElectricityPrice: number
 }
 
-export default function MonthlyLogModal({ onAdd, onClose }: Props) {
+export default function MonthlyLogModal({ onAdd, onClose, defaultGasPrice, defaultElectricityPrice }: Props) {
   const now = new Date()
   const [monthYear, setMonthYear] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   )
   const [electricKm, setElectricKm] = useState('')
   const [hybridKm, setHybridKm] = useState('')
+  const [gasPrice, setGasPrice] = useState('')
+  const [electricityPrice, setElectricityPrice] = useState('')
 
   const evVal = parseFloat(electricKm) || 0
   const hybVal = parseFloat(hybridKm) || 0
@@ -22,7 +27,12 @@ export default function MonthlyLogModal({ onAdd, onClose }: Props) {
 
   const handleSubmit = () => {
     if (!isValid) return
-    onAdd([{ date: `${monthYear}-01`, km: totalKm, vehicleType: 'phev', entryType: 'monthly', electricKm: evVal, hybridKm: hybVal }])
+    onAdd([{
+      date: `${monthYear}-01`, km: totalKm, vehicleType: 'phev', entryType: 'monthly',
+      electricKm: evVal, hybridKm: hybVal,
+      gasPriceOverride: parsePriceOverride(gasPrice),
+      electricityPriceOverride: parsePriceOverride(electricityPrice),
+    }])
     onClose()
   }
 
@@ -71,6 +81,15 @@ export default function MonthlyLogModal({ onAdd, onClose }: Props) {
           <div className="text-xs text-gray-400 text-right">
             Totale mese: <span className="font-medium text-gray-600">{totalKm.toFixed(0)} km</span>
           </div>
+
+          <PriceOverrides
+            defaultGasPrice={defaultGasPrice}
+            defaultElectricityPrice={defaultElectricityPrice}
+            gasPrice={gasPrice}
+            electricityPrice={electricityPrice}
+            onGasChange={setGasPrice}
+            onElectricityChange={setElectricityPrice}
+          />
         </div>
 
         <div className="p-6 pt-0">

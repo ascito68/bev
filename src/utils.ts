@@ -17,12 +17,17 @@ export function calcPhevCost(trip: Trip, cfg: Config): number {
 }
 
 export function enrichTrip(trip: Trip, cfg: Config): TripWithSavings {
-  const thermalCost = calcThermalCost(trip.km, cfg)
+  const effectiveCfg: Config = {
+    ...cfg,
+    gasPricePerLiter: trip.gasPriceOverride ?? cfg.gasPricePerLiter,
+    electricityPriceKwh: trip.electricityPriceOverride ?? cfg.electricityPriceKwh,
+  }
+  const thermalCost = calcThermalCost(trip.km, effectiveCfg)
   let actualCost: number
   if (trip.vehicleType === 'electric') {
-    actualCost = calcElectricCost(trip.km, cfg)
+    actualCost = calcElectricCost(trip.km, effectiveCfg)
   } else if (trip.vehicleType === 'phev') {
-    actualCost = calcPhevCost(trip, cfg)
+    actualCost = calcPhevCost(trip, effectiveCfg)
   } else {
     actualCost = thermalCost
   }

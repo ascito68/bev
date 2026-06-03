@@ -1,22 +1,30 @@
 import { useState } from 'react'
 import { X, Zap, Plug } from 'lucide-react'
 import type { Trip } from '../types'
+import PriceOverrides, { parsePriceOverride } from './PriceOverrides'
 
 interface Props {
   trip: Trip
   onSave: (updates: Omit<Trip, 'id'>) => void
   onClose: () => void
+  defaultGasPrice: number
+  defaultElectricityPrice: number
 }
 
-export default function EditTripModal({ trip, onSave, onClose }: Props) {
+export default function EditTripModal({ trip, onSave, onClose, defaultGasPrice, defaultElectricityPrice }: Props) {
   const isMonthly = trip.entryType === 'monthly'
 
-  // For monthly entries store YYYY-MM, for others store YYYY-MM-DD
   const [dateValue, setDateValue] = useState(
     isMonthly ? trip.date.slice(0, 7) : trip.date
   )
   const [electricKm, setElectricKm] = useState(String(trip.electricKm ?? 0))
   const [hybridKm, setHybridKm] = useState(String(trip.hybridKm ?? 0))
+  const [gasPrice, setGasPrice] = useState(
+    trip.gasPriceOverride != null ? String(trip.gasPriceOverride) : ''
+  )
+  const [electricityPrice, setElectricityPrice] = useState(
+    trip.electricityPriceOverride != null ? String(trip.electricityPriceOverride) : ''
+  )
 
   const evVal = parseFloat(electricKm) || 0
   const hybVal = parseFloat(hybridKm) || 0
@@ -33,6 +41,8 @@ export default function EditTripModal({ trip, onSave, onClose }: Props) {
       entryType: trip.entryType,
       electricKm: evVal,
       hybridKm: hybVal,
+      gasPriceOverride: parsePriceOverride(gasPrice),
+      electricityPriceOverride: parsePriceOverride(electricityPrice),
     })
     onClose()
   }
@@ -94,6 +104,15 @@ export default function EditTripModal({ trip, onSave, onClose }: Props) {
           <div className="text-xs text-gray-400 text-right">
             Totale: <span className="font-medium text-gray-600">{kmVal.toFixed(1)} km</span>
           </div>
+
+          <PriceOverrides
+            defaultGasPrice={defaultGasPrice}
+            defaultElectricityPrice={defaultElectricityPrice}
+            gasPrice={gasPrice}
+            electricityPrice={electricityPrice}
+            onGasChange={setGasPrice}
+            onElectricityChange={setElectricityPrice}
+          />
         </div>
 
         <div className="p-6 pt-0 flex gap-3">
