@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Design Preview – PHEV Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: #111; color: #fff; }
+
+/* ── Layout ── */
+.wrapper { display: flex; flex-direction: column; gap: 0; }
+.section-header {
+  padding: 24px 32px 16px;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: #666;
+}
+.section-header span { color: #fff; font-size: 20px; font-weight: 800; letter-spacing: -.02em; display: block; margin-top: 4px; }
+.section-header em { display: block; font-style: normal; font-size: 12px; color: #888; margin-top: 2px; }
+.phones { display: flex; gap: 24px; padding: 0 32px 48px; overflow-x: auto; }
+
+/* ── Phone shell ── */
+.phone {
+  flex-shrink: 0;
+  width: 320px;
+  border-radius: 44px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.1);
+  position: relative;
+}
+.phone-notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100px; height: 28px; background: #000; border-radius: 0 0 18px 18px; z-index: 10;
+}
+.phone-screen { height: 640px; overflow: hidden; }
+
+/* ══════════════════════════════════════════════════
+   CURRENT (generic)
+══════════════════════════════════════════════════ */
+.current {
+  background: #f9fafb;
+  font-family: -apple-system, sans-serif;
+  padding-top: 28px;
+}
+.c-header {
+  background: #fff; border-bottom: 1px solid #f3f4f6;
+  padding: 16px; display: flex; justify-content: space-between; align-items: center;
+}
+.c-header h1 { font-size: 17px; font-weight: 700; color: #111; }
+.c-header p { font-size: 11px; color: #9ca3af; }
+.c-header-icons { display: flex; gap: 8px; }
+.c-icon-btn {
+  width: 36px; height: 36px; background: #f3f4f6; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.c-tabs { display: flex; gap: 4px; padding: 0 16px; background: #fff; border-bottom: 1px solid #f3f4f6; }
+.c-tab { padding: 10px 14px; font-size: 13px; font-weight: 500; color: #9ca3af; border-bottom: 2px solid transparent; }
+.c-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+.c-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.c-card {
+  background: #fff; border-radius: 16px; padding: 16px;
+  border: 1px solid #f3f4f6; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.c-card-label { font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 8px; }
+.c-card-big { font-size: 22px; font-weight: 700; color: #111; }
+.c-chips { display: flex; gap: 8px; margin-top: 6px; }
+.c-chip { font-size: 11px; font-weight: 500; padding: 4px 8px; border-radius: 8px; }
+.c-chip.ev { background: #eff6ff; color: #2563eb; }
+.c-chip.hyb { background: #f5f3ff; color: #7c3aed; }
+.c-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+.c-col { padding: 14px 8px; text-align: center; border-right: 1px solid #f3f4f6; }
+.c-col:last-child { border-right: none; }
+.c-col.hl { background: #f5f3ff; }
+.c-col-icon { font-size: 14px; margin-bottom: 4px; }
+.c-col-label { font-size: 10px; font-weight: 600; color: #6b7280; }
+.c-col-cost { font-size: 14px; font-weight: 700; color: #111; margin: 2px 0; }
+.c-col.hl .c-col-label { color: #6d28d9; }
+.c-col.hl .c-col-cost { color: #5b21b6; }
+.c-col-sub { font-size: 9px; color: #9ca3af; }
+.c-savings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.c-save-card { padding: 14px; border-radius: 16px; border: 1px solid; }
+.c-save-card.green { background: #f0fdf4; border-color: #dcfce7; }
+.c-save-card.orange { background: #fff7ed; border-color: #fed7aa; }
+.c-save-label { font-size: 10px; font-weight: 600; color: #15803d; margin-bottom: 4px; }
+.c-save-val { font-size: 18px; font-weight: 700; color: #15803d; }
+.c-bar-wrap { margin: 6px 0 0; }
+.c-bar-bg { height: 10px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+.c-bar-fill { height: 10px; background: linear-gradient(90deg, #60a5fa, #2563eb); border-radius: 99px; width: 38%; }
+.c-bar-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: #9ca3af; }
+.c-fab {
+  position: absolute; bottom: 20px; right: 20px;
+  width: 52px; height: 52px; background: #7c3aed; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #fff; font-weight: 300;
+  box-shadow: 0 4px 14px rgba(124,58,237,.4);
+}
+
+/* ══════════════════════════════════════════════════
+   PROPOSAL A — Instrument Panel (dark)
+══════════════════════════════════════════════════ */
+.prop-a {
+  background: #080f1a;
+  font-family: 'Inter', sans-serif;
+  padding-top: 28px;
+  color: #fff;
+}
+.a-header {
+  padding: 14px 16px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.a-logo { display: flex; align-items: center; gap: 10px; }
+.a-logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, #00e5a0, #00b4d8);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.a-logo h1 { font-size: 15px; font-weight: 800; letter-spacing: -.02em; color: #fff; }
+.a-logo p { font-size: 10px; color: #4a6580; }
+.a-header-right { display: flex; gap: 8px; }
+.a-icon-btn {
+  width: 34px; height: 34px; background: rgba(255,255,255,.07); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.a-tabs {
+  display: flex; gap: 0; padding: 0 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.a-tab { padding: 8px 14px; font-size: 12px; font-weight: 600; color: #4a6580; border-bottom: 2px solid transparent; }
+.a-tab.active { color: #00e5a0; border-bottom-color: #00e5a0; }
+.a-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Hero card */
+.a-hero {
+  background: linear-gradient(135deg, #0d1f35 0%, #0a1628 100%);
+  border-radius: 20px; padding: 18px;
+  border: 1px solid rgba(0,229,160,.15);
+  position: relative; overflow: hidden;
+}
+.a-hero::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(0,229,160,.12) 0%, transparent 70%);
+}
+.a-hero-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #4a6580; }
+.a-hero-val { font-size: 44px; font-weight: 900; letter-spacing: -.04em; color: #fff; line-height: 1; margin: 4px 0 2px; }
+.a-hero-val span { font-size: 18px; font-weight: 500; color: #4a6580; }
+.a-hero-sub { font-size: 11px; color: #00e5a0; font-weight: 600; }
+.a-hero-chips { display: flex; gap: 8px; margin-top: 12px; }
+.a-chip { font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 99px; display: flex; align-items: center; gap: 5px; }
+.a-chip.ev { background: rgba(0,180,216,.15); color: #00b4d8; border: 1px solid rgba(0,180,216,.2); }
+.a-chip.hyb { background: rgba(139,92,246,.15); color: #a78bfa; border: 1px solid rgba(139,92,246,.2); }
+
+/* 3-way comparison */
+.a-compare {
+  background: #0d1f35; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.06); overflow: hidden;
+}
+.a-compare-head { padding: 12px 16px 6px; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #4a6580; }
+.a-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+.a-col { padding: 12px 6px; text-align: center; border-right: 1px solid rgba(255,255,255,.05); }
+.a-col:last-child { border-right: none; }
+.a-col.hl { background: rgba(0,229,160,.05); }
+.a-col-icon { font-size: 16px; margin-bottom: 4px; }
+.a-col-label { font-size: 10px; font-weight: 700; color: #4a6580; letter-spacing: .05em; text-transform: uppercase; }
+.a-col.hl .a-col-label { color: #00e5a0; }
+.a-col-cost { font-size: 16px; font-weight: 800; color: #fff; margin: 3px 0 1px; font-variant-numeric: tabular-nums; }
+.a-col.hl .a-col-cost { color: #00e5a0; }
+.a-col-sub { font-size: 9px; color: #2d4a60; }
+
+/* Savings */
+.a-savings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.a-save { padding: 14px; border-radius: 16px; }
+.a-save.green { background: rgba(0,229,160,.08); border: 1px solid rgba(0,229,160,.15); }
+.a-save.neutral { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
+.a-save-label { font-size: 10px; font-weight: 600; color: #4a6580; margin-bottom: 6px; }
+.a-save-val { font-size: 20px; font-weight: 800; color: #00e5a0; letter-spacing: -.02em; }
+.a-save.neutral .a-save-val { color: #a78bfa; }
+.a-save-note { font-size: 9px; color: #2d4a60; margin-top: 3px; }
+
+/* Breakeven gauge */
+.a-gauge-card {
+  background: #0d1f35; border-radius: 20px; padding: 16px;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.a-gauge-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.a-gauge-title { font-size: 12px; font-weight: 700; color: #fff; }
+.a-gauge-status { font-size: 11px; font-weight: 600; color: #00e5a0; }
+.a-gauge-bg { height: 6px; background: rgba(255,255,255,.07); border-radius: 99px; overflow: hidden; }
+.a-gauge-fill { height: 6px; width: 38%; background: linear-gradient(90deg, #00b4d8, #00e5a0); border-radius: 99px; }
+.a-gauge-labels { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9px; color: #2d4a60; }
+
+.a-fab {
+  position: absolute; bottom: 20px; right: 20px;
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #00e5a0, #00b4d8);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #080f1a; font-weight: 800;
+  box-shadow: 0 4px 20px rgba(0,229,160,.4);
+}
+
+/* ══════════════════════════════════════════════════
+   PROPOSAL B — Italian Racing
+══════════════════════════════════════════════════ */
+.prop-b {
+  background: #fafafa;
+  font-family: 'Inter', sans-serif;
+  padding-top: 28px;
+  color: #0a0a0a;
+}
+.b-header {
+  background: #0a0a0a;
+  padding: 14px 16px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.b-logo { display: flex; align-items: center; gap: 10px; }
+.b-logo-icon {
+  width: 34px; height: 34px;
+  background: #e01b2f;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.b-logo h1 { font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #fff; }
+.b-logo p { font-size: 9px; color: #666; letter-spacing: .1em; text-transform: uppercase; }
+.b-header-right { display: flex; gap: 8px; }
+.b-icon-btn {
+  width: 34px; height: 34px; background: rgba(255,255,255,.08); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff;
+}
+.b-tabs {
+  display: flex; background: #0a0a0a;
+  padding: 0 16px;
+}
+.b-tab { padding: 8px 14px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #444; border-bottom: 2px solid transparent; }
+.b-tab.active { color: #e01b2f; border-bottom-color: #e01b2f; }
+.b-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Hero */
+.b-hero {
+  background: #0a0a0a; border-radius: 16px; padding: 18px;
+  position: relative; overflow: hidden;
+}
+.b-hero::after {
+  content: '';
+  position: absolute; bottom: -10px; right: -10px;
+  width: 80px; height: 80px;
+  background: #e01b2f;
+  border-radius: 50%;
+  opacity: .08;
+}
+.b-hero-label { font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: #555; }
+.b-hero-val { font-size: 42px; font-weight: 900; letter-spacing: -.04em; color: #fff; line-height: 1; margin: 4px 0 2px; }
+.b-hero-val span { font-size: 16px; font-weight: 400; color: #555; }
+.b-hero-chips { display: flex; gap: 8px; margin-top: 10px; }
+.b-chip {
+  font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.b-chip.ev { background: rgba(255,255,255,.08); color: #ccc; }
+.b-chip.hyb { background: rgba(255,255,255,.05); color: #888; }
+
+/* Compare */
+.b-compare { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e5e5e5; }
+.b-compare-head { padding: 12px 16px 6px; font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: #999; }
+.b-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+.b-col { padding: 14px 6px; text-align: center; border-right: 1px solid #f0f0f0; }
+.b-col:last-child { border-right: none; }
+.b-col.hl { background: #e01b2f; }
+.b-col-icon { font-size: 14px; margin-bottom: 4px; }
+.b-col-label { font-size: 9px; font-weight: 700; color: #999; letter-spacing: .1em; text-transform: uppercase; }
+.b-col.hl .b-col-label { color: rgba(255,255,255,.7); }
+.b-col-cost { font-size: 15px; font-weight: 800; color: #0a0a0a; margin: 3px 0 1px; }
+.b-col.hl .b-col-cost { color: #fff; font-size: 17px; }
+.b-col-sub { font-size: 9px; color: #bbb; }
+.b-col.hl .b-col-sub { color: rgba(255,255,255,.5); }
+
+/* Savings */
+.b-savings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.b-save { padding: 14px; border-radius: 12px; background: #fff; border: 1px solid #e5e5e5; }
+.b-save-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #999; margin-bottom: 6px; }
+.b-save-val { font-size: 19px; font-weight: 800; color: #0a0a0a; }
+.b-save-val.positive { color: #16a34a; }
+.b-save-val.accent { color: #e01b2f; }
+
+/* Breakeven */
+.b-bp { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e5e5e5; }
+.b-bp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.b-bp-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #0a0a0a; }
+.b-bp-status { font-size: 11px; font-weight: 700; color: #e01b2f; }
+.b-bp-bg { height: 4px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
+.b-bp-fill { height: 4px; width: 38%; background: #e01b2f; border-radius: 99px; }
+.b-bp-labels { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9px; color: #bbb; }
+
+.b-fab {
+  position: absolute; bottom: 20px; right: 20px;
+  width: 52px; height: 52px;
+  background: #e01b2f;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #fff; font-weight: 800;
+  box-shadow: 0 4px 16px rgba(224,27,47,.4);
+}
+
+/* ══════════════════════════════════════════════════
+   PROPOSAL C — Conservative Evolution
+══════════════════════════════════════════════════ */
+.prop-c {
+  background: #f4f6fb;
+  font-family: 'Inter', sans-serif;
+  padding-top: 28px;
+  color: #0a0a0a;
+}
+.cc-header {
+  background: #fff; border-bottom: 1px solid #eef0f6;
+  padding: 14px 16px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cc-logo { display: flex; align-items: center; gap: 10px; }
+.cc-logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  box-shadow: 0 4px 12px rgba(124,58,237,.3);
+}
+.cc-logo h1 { font-size: 16px; font-weight: 800; letter-spacing: -.02em; color: #0a0a0a; }
+.cc-logo p { font-size: 10px; color: #9ca3af; font-weight: 500; }
+.cc-header-right { display: flex; gap: 8px; }
+.cc-icon-btn {
+  width: 36px; height: 36px; background: #f4f6fb; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.cc-tabs { display: flex; gap: 4px; padding: 0 16px; background: #fff; border-bottom: 1px solid #eef0f6; }
+.cc-tab { padding: 10px 14px; font-size: 12px; font-weight: 600; color: #9ca3af; border-bottom: 2px solid transparent; }
+.cc-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+.cc-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Hero — grande, diversa dalle altre */
+.cc-hero {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  border-radius: 24px; padding: 20px;
+  position: relative; overflow: hidden;
+}
+.cc-hero::before {
+  content: '';
+  position: absolute; top: -20px; right: -20px;
+  width: 100px; height: 100px;
+  background: rgba(255,255,255,.08); border-radius: 50%;
+}
+.cc-hero-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.6); letter-spacing: .04em; }
+.cc-hero-val { font-size: 46px; font-weight: 900; letter-spacing: -.04em; color: #fff; line-height: 1; margin: 4px 0 2px; }
+.cc-hero-val span { font-size: 20px; font-weight: 400; color: rgba(255,255,255,.5); }
+.cc-hero-chips { display: flex; gap: 8px; margin-top: 14px; }
+.cc-chip { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 99px; }
+.cc-chip.ev { background: rgba(255,255,255,.15); color: rgba(255,255,255,.9); }
+.cc-chip.hyb { background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); }
+
+/* Compare */
+.cc-compare { background: #fff; border-radius: 20px; overflow: hidden; border: 1px solid #eef0f6; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+.cc-compare-head { padding: 12px 16px 6px; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #9ca3af; }
+.cc-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+.cc-col { padding: 14px 6px; text-align: center; border-right: 1px solid #f3f4f6; }
+.cc-col:last-child { border-right: none; }
+.cc-col.hl { background: #f5f3ff; }
+.cc-col-icon { font-size: 16px; margin-bottom: 4px; }
+.cc-col-label { font-size: 10px; font-weight: 600; color: #9ca3af; }
+.cc-col.hl .cc-col-label { color: #7c3aed; }
+.cc-col-cost { font-size: 16px; font-weight: 800; color: #0a0a0a; margin: 3px 0 1px; font-variant-numeric: tabular-nums; }
+.cc-col.hl .cc-col-cost { color: #5b21b6; font-size: 18px; }
+.cc-col-sub { font-size: 9px; color: #9ca3af; }
+
+/* Savings */
+.cc-savings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cc-save { padding: 14px; border-radius: 16px; border: 1px solid; }
+.cc-save.green { background: #f0fdf4; border-color: #bbf7d0; }
+.cc-save.neutral { background: #faf5ff; border-color: #e9d5ff; }
+.cc-save-label { font-size: 10px; font-weight: 600; color: #15803d; margin-bottom: 6px; }
+.cc-save.neutral .cc-save-label { color: #7c3aed; }
+.cc-save-val { font-size: 20px; font-weight: 800; color: #15803d; letter-spacing: -.02em; }
+.cc-save.neutral .cc-save-val { color: #7c3aed; }
+
+/* Breakeven */
+.cc-bp { background: #fff; border-radius: 20px; padding: 16px; border: 1px solid #eef0f6; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+.cc-bp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.cc-bp-title { font-size: 12px; font-weight: 700; color: #0a0a0a; }
+.cc-bp-status { font-size: 11px; font-weight: 600; color: #7c3aed; }
+.cc-bp-bg { height: 8px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+.cc-bp-fill { height: 8px; width: 38%; background: linear-gradient(90deg, #7c3aed, #4f46e5); border-radius: 99px; }
+.cc-bp-labels { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9px; color: #9ca3af; }
+
+.cc-fab {
+  position: absolute; bottom: 20px; right: 20px;
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #fff; font-weight: 300;
+  box-shadow: 0 6px 20px rgba(124,58,237,.45);
+}
+
+/* ── Page structure ── */
+.page-title {
+  padding: 32px 32px 8px;
+  font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -.03em;
+}
+.page-sub { padding: 0 32px 24px; font-size: 14px; color: #666; }
+.divider { height: 1px; background: rgba(255,255,255,.06); margin: 0 32px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="page-title">Design Preview — PHEV Tracker</div>
+  <div class="page-sub">Tre direzioni a confronto. Stessa struttura dati, identità visiva diversa.</div>
+  <div class="divider"></div>
+
+  <!-- Labels -->
+  <div style="display:flex; gap:24px; padding: 24px 32px 0;">
+    <div style="width:320px; flex-shrink:0">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#555;">Attuale</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-top:3px;">Stato corrente</div>
+      <div style="font-size:12px;color:#555;margin-top:2px;">Tailwind defaults, nessuna identità</div>
+    </div>
+    <div style="width:320px; flex-shrink:0">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#00e5a0;">Proposta A</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-top:3px;">Instrument Panel</div>
+      <div style="font-size:12px;color:#555;margin-top:2px;">Dark, dati come protagonisti</div>
+    </div>
+    <div style="width:320px; flex-shrink:0">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#e01b2f;">Proposta B</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-top:3px;">Italian Racing</div>
+      <div style="font-size:12px;color:#555;margin-top:2px;">Bianco/nero, accento rosso, premium</div>
+    </div>
+    <div style="width:320px; flex-shrink:0">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#a78bfa;">Proposta C</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-top:3px;">Evoluzione conservativa</div>
+      <div style="font-size:12px;color:#555;margin-top:2px;">Stessa struttura, personalità aggiunta</div>
+    </div>
+  </div>
+
+  <div class="phones">
+
+    <!-- ═══ CURRENT ═══ -->
+    <div class="phone" style="border: 2px solid #333;">
+      <div class="phone-notch"></div>
+      <div class="phone-screen current" style="position:relative;">
+        <div class="c-header">
+          <div><div class="c-header h1" style="font-size:17px;font-weight:700;color:#111;">PHEV Tracker</div><div style="font-size:11px;color:#9ca3af;">Confronto consumi</div></div>
+          <div class="c-header-icons"><div class="c-icon-btn">⚙</div><div class="c-icon-btn">↗</div></div>
+        </div>
+        <div class="c-tabs">
+          <div class="c-tab active">Dashboard</div>
+          <div class="c-tab">Dati <span style="background:#f3e8ff;color:#7c3aed;font-size:9px;padding:1px 5px;border-radius:99px;margin-left:4px;">12</span></div>
+        </div>
+        <div class="c-body">
+          <div class="c-card">
+            <div class="c-card-label">Km totali monitorati</div>
+            <div class="c-card-big">15.240 km</div>
+            <div class="c-chips">
+              <div class="c-chip ev">⚡ EV: 7.800 km</div>
+              <div class="c-chip hyb">🔌 Hybrid: 7.440 km</div>
+            </div>
+          </div>
+          <div class="c-card">
+            <div class="c-card-label" style="margin-bottom:6px;">Confronto costi su 15.240 km</div>
+            <div class="c-3col">
+              <div class="c-col"><div class="c-col-icon">⛽</div><div class="c-col-label">Termica</div><div class="c-col-cost">€1.880</div><div class="c-col-sub">solo benzina</div></div>
+              <div class="c-col hl"><div class="c-col-icon">🔌</div><div class="c-col-label">PHEV</div><div class="c-col-cost">€986</div><div class="c-col-sub">costo reale</div></div>
+              <div class="c-col"><div class="c-col-icon">⚡</div><div class="c-col-label">BEV</div><div class="c-col-cost">€609</div><div class="c-col-sub">solo elettrico</div></div>
+            </div>
+          </div>
+          <div class="c-savings">
+            <div class="c-save-card green"><div class="c-save-label">Risparmio vs Termica</div><div class="c-save-val">+€894</div></div>
+            <div class="c-save-card orange"><div class="c-save-label">Δ vs BEV</div><div class="c-save-val" style="color:#b45309;">+€377</div></div>
+          </div>
+          <div class="c-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span style="font-size:12px;font-weight:600;color:#374151;">Punto di Pareggio</span>
+              <span style="font-size:11px;color:#6b7280;">Mancano €7.106</span>
+            </div>
+            <div class="c-bar-bg"><div class="c-bar-fill"></div></div>
+            <div class="c-bar-labels"><span>€894 risparmiati</span><span>€8.000 obiettivo</span></div>
+          </div>
+        </div>
+        <div class="c-fab">+</div>
+      </div>
+    </div>
+
+    <!-- ═══ PROPOSAL A ═══ -->
+    <div class="phone" style="border: 1px solid rgba(0,229,160,.3);">
+      <div class="phone-notch"></div>
+      <div class="phone-screen prop-a" style="position:relative;">
+        <div class="a-header">
+          <div class="a-logo">
+            <div class="a-logo-icon">⚡</div>
+            <div><div class="a-logo h1" style="font-size:15px;font-weight:800;color:#fff;">PHEV Tracker</div><div style="font-size:10px;color:#4a6580;">Confronto consumi</div></div>
+          </div>
+          <div class="a-header-right"><div class="a-icon-btn" style="color:#aaa;">⚙</div><div class="a-icon-btn" style="color:#aaa;">↗</div></div>
+        </div>
+        <div class="a-tabs">
+          <div class="a-tab active">Dashboard</div>
+          <div class="a-tab">Dati <span style="background:rgba(0,229,160,.15);color:#00e5a0;font-size:9px;padding:1px 5px;border-radius:99px;margin-left:4px;">12</span></div>
+        </div>
+        <div class="a-body">
+          <div class="a-hero">
+            <div class="a-hero-label">Km totali monitorati</div>
+            <div class="a-hero-val">15.240<span> km</span></div>
+            <div class="a-hero-sub">↑ 11% rispetto al mese scorso</div>
+            <div class="a-hero-chips">
+              <div class="a-chip ev">⚡ 7.800 EV</div>
+              <div class="a-chip hyb">🔌 7.440 Hybrid</div>
+            </div>
+          </div>
+          <div class="a-compare">
+            <div class="a-compare-head">Confronto costi — 15.240 km</div>
+            <div class="a-3col">
+              <div class="a-col"><div class="a-col-icon">⛽</div><div class="a-col-label">Termica</div><div class="a-col-cost">€1.880</div><div class="a-col-sub">benzina pura</div></div>
+              <div class="a-col hl"><div class="a-col-icon">🔌</div><div class="a-col-label">PHEV</div><div class="a-col-cost">€986</div><div class="a-col-sub">costo reale</div></div>
+              <div class="a-col"><div class="a-col-icon">⚡</div><div class="a-col-label">BEV</div><div class="a-col-cost">€609</div><div class="a-col-sub">solo elettrico</div></div>
+            </div>
+          </div>
+          <div class="a-savings">
+            <div class="a-save green"><div class="a-save-label">vs Termica</div><div class="a-save-val">+€894</div><div class="a-save-note">risparmio totale</div></div>
+            <div class="a-save neutral"><div class="a-save-label">Δ vs BEV</div><div class="a-save-val">+€377</div><div class="a-save-note">PHEV più economico</div></div>
+          </div>
+          <div class="a-gauge-card">
+            <div class="a-gauge-head"><span class="a-gauge-title">Punto di Pareggio</span><span class="a-gauge-status">Mancano €7.106</span></div>
+            <div class="a-gauge-bg"><div class="a-gauge-fill"></div></div>
+            <div class="a-gauge-labels"><span>€894 risparmiati</span><span>€8.000 obiettivo</span></div>
+          </div>
+        </div>
+        <div class="a-fab">+</div>
+      </div>
+    </div>
+
+    <!-- ═══ PROPOSAL B ═══ -->
+    <div class="phone" style="border: 1px solid rgba(224,27,47,.3);">
+      <div class="phone-notch"></div>
+      <div class="phone-screen prop-b" style="position:relative;">
+        <div class="b-header">
+          <div class="b-logo">
+            <div class="b-logo-icon">🔌</div>
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;">PHEV</div><div style="font-size:9px;color:#555;letter-spacing:.12em;text-transform:uppercase;">Tracker</div></div>
+          </div>
+          <div class="b-header-right"><div class="b-icon-btn">⚙</div><div class="b-icon-btn">↗</div></div>
+        </div>
+        <div class="b-tabs">
+          <div class="b-tab active">Dashboard</div>
+          <div class="b-tab">Dati <span style="background:rgba(255,255,255,.1);color:#888;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px;">12</span></div>
+        </div>
+        <div class="b-body">
+          <div class="b-hero">
+            <div class="b-hero-label">Km totali monitorati</div>
+            <div class="b-hero-val">15.240<span> km</span></div>
+            <div class="b-hero-chips">
+              <div class="b-chip ev">EV 7.800</div>
+              <div class="b-chip hyb">HYB 7.440</div>
+            </div>
+          </div>
+          <div class="b-compare">
+            <div class="b-compare-head">Confronto costi — 15.240 km</div>
+            <div class="b-3col">
+              <div class="b-col"><div class="b-col-icon">⛽</div><div class="b-col-label">Termica</div><div class="b-col-cost">€1.880</div><div class="b-col-sub">benzina</div></div>
+              <div class="b-col hl"><div class="b-col-icon" style="color:#fff;">🔌</div><div class="b-col-label">PHEV</div><div class="b-col-cost">€986</div><div class="b-col-sub">reale</div></div>
+              <div class="b-col"><div class="b-col-icon">⚡</div><div class="b-col-label">BEV</div><div class="b-col-cost">€609</div><div class="b-col-sub">elettrico</div></div>
+            </div>
+          </div>
+          <div class="b-savings">
+            <div class="b-save"><div class="b-save-label">vs Termica</div><div class="b-save-val positive">+€894</div></div>
+            <div class="b-save"><div class="b-save-label">Δ vs BEV</div><div class="b-save-val accent">+€377</div></div>
+          </div>
+          <div class="b-bp">
+            <div class="b-bp-head"><span class="b-bp-title">Punto di Pareggio</span><span class="b-bp-status">Mancano €7.106</span></div>
+            <div class="b-bp-bg"><div class="b-bp-fill"></div></div>
+            <div class="b-bp-labels"><span>€894 risparmiati</span><span>€8.000 obiettivo</span></div>
+          </div>
+        </div>
+        <div class="b-fab">+</div>
+      </div>
+    </div>
+
+    <!-- ═══ PROPOSAL C ═══ -->
+    <div class="phone" style="border: 1px solid rgba(124,58,237,.3);">
+      <div class="phone-notch"></div>
+      <div class="phone-screen prop-c" style="position:relative;">
+        <div class="cc-header">
+          <div class="cc-logo">
+            <div class="cc-logo-icon">⚡</div>
+            <div><div style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:#0a0a0a;">PHEV Tracker</div><div style="font-size:10px;color:#9ca3af;font-weight:500;">Confronto consumi</div></div>
+          </div>
+          <div class="cc-header-right"><div class="cc-icon-btn">⚙</div><div class="cc-icon-btn">↗</div></div>
+        </div>
+        <div class="cc-tabs">
+          <div class="cc-tab active">Dashboard</div>
+          <div class="cc-tab">Dati <span style="background:#f3e8ff;color:#7c3aed;font-size:9px;padding:1px 5px;border-radius:99px;margin-left:4px;">12</span></div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-hero">
+            <div class="cc-hero-label">Km totali monitorati</div>
+            <div class="cc-hero-val">15.240<span> km</span></div>
+            <div class="cc-hero-chips">
+              <div class="cc-chip ev">⚡ EV: 7.800 km</div>
+              <div class="cc-chip hyb">🔌 Hybrid: 7.440</div>
+            </div>
+          </div>
+          <div class="cc-compare">
+            <div class="cc-compare-head">Confronto costi su 15.240 km</div>
+            <div class="cc-3col">
+              <div class="cc-col"><div class="cc-col-icon">⛽</div><div class="cc-col-label">Termica</div><div class="cc-col-cost">€1.880</div><div class="cc-col-sub">solo benzina</div></div>
+              <div class="cc-col hl"><div class="cc-col-icon">🔌</div><div class="cc-col-label">PHEV</div><div class="cc-col-cost">€986</div><div class="cc-col-sub">costo reale</div></div>
+              <div class="cc-col"><div class="cc-col-icon">⚡</div><div class="cc-col-label">BEV</div><div class="cc-col-cost">€609</div><div class="cc-col-sub">solo elettrico</div></div>
+            </div>
+          </div>
+          <div class="cc-savings">
+            <div class="cc-save green"><div class="cc-save-label">Risparmio vs Termica</div><div class="cc-save-val">+€894</div></div>
+            <div class="cc-save neutral"><div class="cc-save-label">Δ vs BEV</div><div class="cc-save-val">+€377</div></div>
+          </div>
+          <div class="cc-bp">
+            <div class="cc-bp-head"><span class="cc-bp-title">Punto di Pareggio</span><span class="cc-bp-status">Mancano €7.106</span></div>
+            <div class="cc-bp-bg"><div class="cc-bp-fill"></div></div>
+            <div class="cc-bp-labels"><span>€894 risparmiati</span><span>€8.000 obiettivo</span></div>
+          </div>
+        </div>
+        <div class="cc-fab">+</div>
+      </div>
+    </div>
+
+  </div><!-- end phones -->
+
+  <div class="divider"></div>
+  <div style="padding:24px 32px; display:flex; gap:40px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#555;margin-bottom:8px;">Attuale — problemi</div>
+      <ul style="font-size:12px;color:#888;list-style:none;display:flex;flex-direction:column;gap:4px;">
+        <li>• Palette Tailwind di default senza sistema</li>
+        <li>• Tutti i card identici (stesso peso visivo)</li>
+        <li>• Font di sistema, nessun carattere tipografico</li>
+        <li>• Favicon = logo Vite</li>
+        <li>• FAB Material Design generico</li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#00e5a0;margin-bottom:8px;">A — Instrument Panel</div>
+      <ul style="font-size:12px;color:#888;list-style:none;display:flex;flex-direction:column;gap:4px;">
+        <li>• Sfondo quasi-nero, si sente il "tech"</li>
+        <li>• Verde-teal = risparmio, dati come hero</li>
+        <li>• Font Inter, numeri grandi e luminosi</li>
+        <li>• Gerarchia chiara tra sezioni</li>
+        <li>• Richiede più rework, aspetto più netto</li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#e01b2f;margin-bottom:8px;">B — Italian Racing</div>
+      <ul style="font-size:12px;color:#888;list-style:none;display:flex;flex-direction:column;gap:4px;">
+        <li>• Header nero + accento rosso = personalità forte</li>
+        <li>• Typography condensata, lettere maiuscole</li>
+        <li>• PHEV evidenziato su sfondo rosso</li>
+        <li>• Stile editoriale/automotive premium</li>
+        <li>• Polarizzante — o piace molto o poco</li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#a78bfa;margin-bottom:8px;">C — Evoluzione conservativa</div>
+      <ul style="font-size:12px;color:#888;list-style:none;display:flex;flex-direction:column;gap:4px;">
+        <li>• Hero card viola a piena larghezza = gerarchia</li>
+        <li>• Font Inter, border-radius variabile</li>
+        <li>• Stessa struttura attuale, molto migliorata</li>
+        <li>• Rischio minimo, deploy veloce</li>
+        <li>• Non stravolgente ma riconoscibile</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
