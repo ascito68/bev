@@ -23,12 +23,14 @@ export default function PriceOverrides({
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-colors text-sm text-gray-600 font-medium"
       >
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-        Prezzi personalizzati
+        <span className="flex items-center gap-1.5">
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          Prezzi personalizzati
+        </span>
         {hasOverride && !open && (
-          <span className="text-violet-500 font-semibold">· modificati</span>
+          <span className="text-xs text-violet-500 font-semibold">modificati</span>
         )}
       </button>
 
