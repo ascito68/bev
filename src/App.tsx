@@ -275,6 +275,11 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
         )}
       </div>
 
+      {/* Footer */}
+      <div className="max-w-lg mx-auto px-4 py-6 text-center">
+        <p className="text-xs text-gray-400">AI-assisted development by <span className="font-medium text-gray-500">Stefano Cibelli</span> with <span className="font-medium text-gray-500">Claude Code</span></p>
+      </div>
+
       {/* FAB */}
       <button onClick={() => setShowSelector(true)}
         className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg flex items-center justify-center transition-all active:scale-95"
