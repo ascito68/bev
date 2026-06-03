@@ -39,8 +39,8 @@ export default function AuthPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-sm p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-2.5 bg-purple-100 rounded-xl">
-            <Plug className="w-5 h-5 text-purple-600" />
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+            <Plug className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">PHEV Tracker</h1>

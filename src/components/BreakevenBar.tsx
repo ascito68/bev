@@ -25,7 +25,7 @@ export default function BreakevenBar({ savings, investmentCost }: Props) {
 
       <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
         <div
-          className={`h-3 rounded-full transition-all duration-700 ${reached ? 'bg-green-500' : 'bg-gradient-to-r from-blue-400 to-blue-600'}`}
+          className={`h-3 rounded-full transition-all duration-700 ${reached ? 'bg-green-500' : 'bg-gradient-to-r from-violet-500 to-indigo-500'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
