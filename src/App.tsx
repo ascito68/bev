@@ -166,9 +166,14 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
       {/* Header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">PHEV Tracker</h1>
-            <p className="text-xs text-gray-400">Confronto consumi</p>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+              <Plug className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">PHEV Tracker</h1>
+              <p className="text-xs text-gray-400">Confronto consumi</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowSettings(true)}
@@ -196,14 +201,18 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
         {tab === 'dashboard' && (
           <>
             {/* Total km summary */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">Km totali monitorati</span>
-                <span className="text-2xl font-bold text-gray-900">{totalKm.toLocaleString('it-IT')} km</span>
+            <div className="bg-gradient-to-br from-violet-600 to-indigo-600 rounded-3xl p-5 shadow-lg relative overflow-hidden">
+              <div className="absolute -top-6 -right-6 w-28 h-28 bg-white/10 rounded-full pointer-events-none" />
+              <div className="mb-4">
+                <span className="text-xs font-semibold text-white/60 uppercase tracking-widest">Km totali monitorati</span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-4xl font-black text-white tracking-tight">{totalKm.toLocaleString('it-IT')}</span>
+                  <span className="text-lg font-medium text-white/50">km</span>
+                </div>
               </div>
-              <div className="flex items-center gap-4 text-xs">
-                <ModeChip icon={<Zap className="w-3 h-3" />} label="EV" km={totalEvKm} color="text-blue-600 bg-blue-50" />
-                <ModeChip icon={<Plug className="w-3 h-3" />} label="Hybrid" km={totalHybKm} color="text-purple-600 bg-purple-50" />
+              <div className="flex items-center gap-3 text-xs">
+                <ModeChip icon={<Zap className="w-3 h-3" />} label="EV" km={totalEvKm} color="text-white/90 bg-white/[.15]" />
+                <ModeChip icon={<Plug className="w-3 h-3" />} label="Hybrid" km={totalHybKm} color="text-white/75 bg-white/10" />
               </div>
             </div>
 
@@ -268,7 +277,7 @@ function MainApp({ userId, userEmail }: { userId: string; userEmail: string }) {
 
       {/* FAB */}
       <button onClick={() => setShowSelector(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg flex items-center justify-center transition-all active:scale-95"
         aria-label="Aggiungi dati">
         <Plus className="w-7 h-7" />
       </button>
